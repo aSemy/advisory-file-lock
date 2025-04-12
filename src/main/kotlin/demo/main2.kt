@@ -25,70 +25,52 @@ fun main(args: Array<String>) {
 
   repeat(5) { i ->
     thread(isDaemon = true, name = "reader$i") {
-      while (true) {
-        Thread.sleep((i + 1).seconds.inWholeMilliseconds)
-        RandomAccessFile(lockFile, read = true, write = true).use { lockFileAccess ->
-          val channel = lockFileAccess.channel
-          try {
-            channel.acquireReadLock().use {
-              channel.writeInt(channel.readInt() + 1)
-            }
+      FileReadWriteLock(lockFile).use { locker ->
+        while (true) {
+          Thread.sleep(i.seconds.inWholeMilliseconds)
+          locker.withReadLock {
             val current = dataFile.readText().toInt()
             println("${Thread.currentThread().name}: current = $current")
             Thread.sleep(1.seconds.inWholeMilliseconds)
-          } finally {
-            channel.acquireReadLock().use {
-              channel.writeInt(channel.readInt() - 1)
-            }
           }
+//        RandomAccessFile(lockFile, read = true, write = true).use { lockFileAccess ->
+//          val channel = lockFileAccess.channel
+//          try {
+//            channel.acquireReadLock().use {
+//              channel.writeInt(channel.readInt() + 1)
+//            }
+//            val current = dataFile.readText().toInt()
+//            println("${Thread.currentThread().name}: current = $current")
+//            Thread.sleep(1.seconds.inWholeMilliseconds)
+//          } finally {
+//            channel.acquireReadLock().use {
+//              channel.writeInt(channel.readInt() - 1)
+//            }
+//          }
+//        }
+          Thread.sleep((i + 1).seconds.inWholeMilliseconds)
         }
-        Thread.sleep((i + 1).seconds.inWholeMilliseconds)
       }
     }
   }
 
   repeat(repetitions) {
-    RandomAccessFile(lockFile, read = true, write = true).use { lockFileAccess ->
-      val channel = lockFileAccess.channel
-      channel.acquireWriteLock().use {
+    FileReadWriteLock(lockFile).use { locker ->
+      locker.withWriteLock {
         val current = dataFile.readText().toInt()
         println("[writer] current = $current")
         dataFile.writeText((current + 1).toString())
         c++
       }
-//      channel.lock().use { _ ->
-////          println("Thread 1: Lock acquired.")
-//        val current: Int = channel.readInt()
-////          if (lockFileAccess.length() > 0) {
-////            ByteBuffer.allocate(Int.SIZE_BYTES).let {
-////              channel.read(it, 0)
-////              it.rewind()
-////                .getInt()
-////            }
-////          } else {
-////            0
-////          }
-//
-//        println("current = $current")
-//
-//        channel.writeInt(current + 1)
-//        channel.force(false)
-//        i++
-//      }
     }
   }
 
   println("c = $c")
+
   val endDataVal =
-    RandomAccessFile(lockFile, read = true, write = true).use { lockFileAccess ->
-      val channel = lockFileAccess.channel
-      channel.acquireReadLock().use { _ ->
-        try {
-          channel.writeInt(channel.readInt() + 1)
-          dataFile.readText().toInt()
-        } finally {
-          channel.writeInt(channel.readInt() - 1)
-        }
+    FileReadWriteLock(lockFile).use { locker ->
+      locker.withReadLock {
+        dataFile.readText().toInt()
       }
     }
   println("endDataVal = $endDataVal")
