@@ -33,7 +33,7 @@ internal inline fun <T> FileReadWriteLock.withWriteLock(action: () -> T): T {
  * @return the return value of [action].
  */
 @OptIn(ExperimentalContracts::class)
-internal inline fun <T> FileReadWriteLock.LockAccess.withLock(action: () -> T): T {
+internal inline fun <T> LockAccess.withLock(action: () -> T): T {
   contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
   try {
     lock()
