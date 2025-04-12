@@ -26,68 +26,68 @@ internal class FileReadWriteLock(
   override fun close() {
     accessFile.close()
   }
+}
 
-  internal sealed interface LockAccess : AutoCloseable {
-    fun lock()
-    fun unlock()
-    override fun close(): Unit = unlock()
-  }
+internal sealed interface LockAccess : AutoCloseable {
+  fun lock()
+  fun unlock()
+  override fun close(): Unit = unlock()
+}
 
-  private class ReadLock(
-    lfa: RandomAccessFile,
-  ) : LockAccess {
-    private val channel: FileChannel = lfa.channel
+private class ReadLock(
+  lfa: RandomAccessFile,
+) : LockAccess {
+  private val channel: FileChannel = lfa.channel
 
-    override fun lock() {
-      channel.lockLenient().use { _ ->
-        val current = channel.readInt()
-        channel.writeInt(current + 1)
-      }
-    }
-
-    override fun unlock() {
-      channel.lockLenient().use { _ ->
-        val current = channel.readInt()
-        channel.writeInt(current - 1)
-      }
-    }
-
-    override fun close() {
-      unlock()
+  override fun lock() {
+    channel.lockLenient().use { _ ->
+      val current = channel.readInt()
+      channel.writeInt(current + 1)
     }
   }
 
-  private class WriteLock(
-    raf: RandomAccessFile,
-  ) : LockAccess {
-    private val channel: FileChannel = raf.channel
-    private var lock: FileLock? = null
+  override fun unlock() {
+    channel.lockLenient().use { _ ->
+      val current = channel.readInt()
+      channel.writeInt(current - 1)
+    }
+  }
 
-    override fun lock() {
-      while (true) {
-        val lock: FileLock = channel.lockLenient()
-        try {
-          val readersCount = channel.readInt()
-          if (readersCount == 0) {
-            return
-          } else {
-            println("Waiting for $readersCount readers to finish")
-            lock.release()
-            Thread.sleep(Random.nextLong(25, 125))
-          }
-        } catch (ex: Throwable) {
+  override fun close() {
+    unlock()
+  }
+}
+
+private class WriteLock(
+  raf: RandomAccessFile,
+) : LockAccess {
+  private val channel: FileChannel = raf.channel
+  private var lock: FileLock? = null
+
+  override fun lock() {
+    while (true) {
+      val lock: FileLock = channel.lockLenient()
+      try {
+        val readersCount = channel.readInt()
+        if (readersCount == 0) {
+          return
+        } else {
+          println("Waiting for $readersCount readers to finish")
           lock.release()
-          throw ex
+          Thread.sleep(Random.nextLong(25, 125))
         }
+      } catch (ex: Throwable) {
+        lock.release()
+        throw ex
       }
     }
+  }
 
-    override fun unlock() {
-      lock?.release()
-    }
+  override fun unlock() {
+    lock?.release()
+  }
 
-    override fun close() {
-      unlock()
-    }
+  override fun close() {
+    unlock()
   }
 }
