@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package locklistener;
+package locklistener
 
 /**
  * Packet type for communication about file locks.
  *
- * <p>For backward compatibility, enum constants must not be removed.
+ *
+ * For backward compatibility, enum constants must not be removed.
  */
-public enum FileLockPacketType {
-    UNKNOWN,
-    UNLOCK_REQUEST,
-    UNLOCK_REQUEST_CONFIRMATION,
-    LOCK_RELEASE_CONFIRMATION
+enum class FileLockPacketType {
+  UNKNOWN,
+  UNLOCK_REQUEST,
+  UNLOCK_REQUEST_CONFIRMATION,
+  LOCK_RELEASE_CONFIRMATION,
 }

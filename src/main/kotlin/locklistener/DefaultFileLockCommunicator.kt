@@ -24,11 +24,7 @@ class DefaultFileLockCommunicator(
   inetAddressProvider: InetAddressProvider
 ) : FileLockCommunicator {
   private val socket: DatagramSocket =
-    try {
-      DatagramSocket(0, inetAddressProvider.wildcardBindingAddress)
-    } catch (e: SocketException) {
-      throw e
-    }
+    DatagramSocket(0, inetAddressProvider.wildcardBindingAddress)
 
 //  init {
 //    try {
@@ -42,7 +38,7 @@ class DefaultFileLockCommunicator(
     var pingSentSuccessfully = false
     val bytesToSend = FileLockPacketPayload.encode(lockId, FileLockPacketType.UNLOCK_REQUEST)
     try {
-      socket!!.send(DatagramPacket(bytesToSend, bytesToSend.size, address, ownerPort))
+      socket.send(DatagramPacket(bytesToSend, bytesToSend.size, address, ownerPort))
       pingSentSuccessfully = true
     } catch (e: IOException) {
       println(
@@ -53,16 +49,16 @@ class DefaultFileLockCommunicator(
   }
 
   @Throws(IOException::class)
-  override fun receive(): Optional<DatagramPacket> {
+  override fun receive(): DatagramPacket? {
     try {
       val bytes = ByteArray(FileLockPacketPayload.MAX_BYTES)
       val packet = DatagramPacket(bytes, bytes.size)
       socket.receive(packet)
-      return Optional.of(packet)
+      return packet
     } catch (e: IOException) {
       // Socket was shutdown while waiting to receive message
       if (socket.isClosed) {
-        return Optional.empty()
+        return null
       }
       throw e
     }
@@ -78,11 +74,9 @@ class DefaultFileLockCommunicator(
     packet.socketAddress = requesterAddress
     println("Confirming unlock request to Gradle process at port ${packet.port} for lock with id $lockId.")
     try {
-      socket!!.send(packet)
+      socket.send(packet)
     } catch (e: IOException) {
-      println(
-        "Failed to confirm unlock request to Gradle process at port ${packet.port} for lock with id $lockId.",
-      )
+      println("Failed to confirm unlock request to Gradle process at port ${packet.port} for lock with id $lockId.")
     }
   }
 
@@ -93,7 +87,7 @@ class DefaultFileLockCommunicator(
       packet.socketAddress = requesterAddress
       println("Confirming lock release to Gradle process at port ${packet.port} for lock with id ${lockId}.")
       try {
-        socket!!.send(packet)
+        socket.send(packet)
       } catch (e: IOException) {
         println("Failed to confirm lock release to Gradle process at port ${packet.port} for lock with id ${lockId}.")
       }

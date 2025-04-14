@@ -1,6 +1,7 @@
 plugins {
   alias(libs.plugins.kotlin.jvm)
   application
+  kotlin("plugin.serialization") version libs.versions.kotlin
 }
 
 repositories {
@@ -8,6 +9,7 @@ repositories {
 }
 
 dependencies {
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
 }
 
 testing {
@@ -17,10 +19,8 @@ testing {
   }
 }
 
-java {
-  toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
-  }
+kotlin {
+  jvmToolchain(17)
 }
 
 tasks.installDist {
@@ -37,4 +37,9 @@ tasks.installDist {
 
 application {
   mainClass = "demo.Main2Kt"
+}
+
+tasks.run.configure {
+  // lower, because I want to trigger GC and lockRef expiration
+  maxHeapSize = "32m"
 }

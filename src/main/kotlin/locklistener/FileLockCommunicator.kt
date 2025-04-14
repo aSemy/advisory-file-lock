@@ -26,7 +26,7 @@ interface FileLockCommunicator {
   fun pingOwner(address: InetAddress?, ownerPort: Int, lockId: Long, displayName: String?): Boolean
 
   @Throws(IOException::class)
-  fun receive(): Optional<DatagramPacket>
+  fun receive(): DatagramPacket?
 
   fun decode(receivedPacket: DatagramPacket): FileLockPacketPayload
 

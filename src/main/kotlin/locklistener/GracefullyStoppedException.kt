@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package locklistener;
+package locklistener
 
-public class GracefullyStoppedException extends RuntimeException {
-}
+class GracefullyStoppedException : RuntimeException()

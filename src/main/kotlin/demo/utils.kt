@@ -8,6 +8,7 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.random.Random
+import kotlin.time.Duration
 
 fun RandomAccessFile(file: Path, read: Boolean, write: Boolean): RandomAccessFile {
   return RandomAccessFile(
@@ -75,3 +76,7 @@ internal tailrec fun FileChannel.lockLenient(): FileLock {
 //    }
 //  }
 //}
+
+internal fun threadSleep(duration: Duration) {
+  Thread.sleep(duration.inWholeMilliseconds)
+}
