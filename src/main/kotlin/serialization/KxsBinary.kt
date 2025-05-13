@@ -5,10 +5,7 @@ package serialization
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.AbstractDecoder
@@ -22,7 +19,7 @@ import kotlinx.serialization.modules.SerializersModule
 internal val kxsBinary: KxsBinary = KxsBinary()
 
 /** [`https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md#efficient-binary-format`](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md#efficient-binary-format) */
-class KxsBinary(
+internal class KxsBinary(
   override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : BinaryFormat {
 
@@ -45,7 +42,8 @@ class KxsBinary(
   }
 }
 
-private val byteArraySerializer = ByteArraySerializer()
+private val byteArraySerializer: KSerializer<ByteArray> =
+  ByteArraySerializer()
 
 
 private class KxsDataOutputEncoder(

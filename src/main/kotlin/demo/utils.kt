@@ -1,16 +1,18 @@
 package demo
 
+import java.io.ByteArrayOutputStream
 import java.io.RandomAccessFile
+import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.channels.OverlappingFileLockException
 import java.nio.file.Path
-import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.random.Random
 import kotlin.time.Duration
+import serialization.kxsBinary
 
-fun RandomAccessFile(file: Path, read: Boolean, write: Boolean): RandomAccessFile {
+internal fun RandomAccessFile(file: Path, read: Boolean, write: Boolean): RandomAccessFile {
   return RandomAccessFile(
     file.toFile(),
     buildString {
@@ -19,22 +21,12 @@ fun RandomAccessFile(file: Path, read: Boolean, write: Boolean): RandomAccessFil
     })
 }
 
-internal fun Path.readInt(): Int? {
-  return readText().toIntOrNull() // ?: 0
-//  return if (this.fileSize() == 0L) {
-//    0
-//  } else {
-//    ByteBuffer.wrap(readBytes())
-//      .getInt()
-//  }
-}
+//internal fun Path.readInt(): Int? {
+//  return readText().toIntOrNull()
+//}
 
 fun Path.writeInt(value: Int) {
   writeText(value.toString())
-//  val bytes = ByteBuffer.allocate(Int.SIZE_BYTES)
-//    .putInt(value)
-//    .array()
-//  writeBytes(bytes)
 }
 
 internal tailrec fun FileChannel.lockLenient(): FileLock {
@@ -79,4 +71,39 @@ internal tailrec fun FileChannel.lockLenient(): FileLock {
 
 internal fun threadSleep(duration: Duration) {
   Thread.sleep(duration.inWholeMilliseconds)
+}
+
+internal fun randomAlphaNumericString(size: Int = 16): String {
+  val chars: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+  return buildString {
+    repeat(size) {
+      append(chars.random())
+    }
+  }
+}
+
+
+
+internal fun FileChannel.writeLockFileData(data: LockFileData) {
+  val encoded = kxsBinary.encodeToByteArray(LockFileData.serializer(), data)
+  write(ByteBuffer.wrap(encoded), 0)
+}
+
+internal fun FileChannel.readLockFileData(): LockFileData {
+  if (size() == 0L) {
+    println("Lock file is empty, returning empty data")
+    return LockFileData(sortedSetOf())
+  }
+  position(0)
+  val bytes = ByteArrayOutputStream().use { os ->
+    val buf = ByteBuffer.allocate(1024)
+    while (read(buf) > 0) {
+      os.write(buf.array(), 0, buf.limit())
+      buf.clear()
+    }
+    os.toByteArray()
+  }
+
+  val data = kxsBinary.decodeFromByteArray(LockFileData.serializer(), bytes)
+  return data
 }

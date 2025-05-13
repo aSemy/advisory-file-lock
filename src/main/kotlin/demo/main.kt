@@ -1,10 +1,7 @@
 package demo
 
 import kotlin.concurrent.thread
-import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.createFile
-import kotlin.io.path.exists
+import kotlin.io.path.*
 
 fun main(args: Array<String>) {
   val repetitions = args.firstOrNull()?.toIntOrNull() ?: 1_000
@@ -57,5 +54,5 @@ fun main(args: Array<String>) {
   thread2.join()
 
   println("i = $i")
-  println("lockFile = ${lockFile.readInt()}")
+  println("lockFile = ${lockFile.readText().toIntOrNull()}")
 }

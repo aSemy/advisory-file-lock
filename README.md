@@ -4,4 +4,6 @@ Kotlin/JVM library for managing advisory file locks.
 
 Limit access to a specific file or directory across threads or processes.
 
+The performance is not good: Use when accuracy is more important than speed.
+
 Requires Java 17: Uses Unix domain sockets. 
