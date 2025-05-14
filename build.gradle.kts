@@ -1,45 +1,67 @@
+@file:Suppress("UnstableApiUsage")
+
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+
 plugins {
   alias(libs.plugins.kotlin.jvm)
-  application
-  kotlin("plugin.serialization") version libs.versions.kotlin
+//  kotlin("plugin.serialization") version libs.versions.kotlin
+  idea
 }
 
-repositories {
-  mavenCentral()
-}
+group = "dev.adamko.lokka"
+version = "0.0.1"
 
 dependencies {
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+//  implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
 }
 
 testing {
-  suites {
-    val test by getting(JvmTestSuite::class) {
+  suites.withType<JvmTestSuite>().configureEach {
+    useJUnitJupiter()
+  }
+  val test by suites.getting(JvmTestSuite::class) {
+    dependencies {
+      implementation("org.jetbrains.kotlin:kotlin-test")
+//      implementation(project.dependencies.kotlin("test"))
     }
   }
+//  suites {
+//    val test by getting(JvmTestSuite::class) {
+//    }
+//  }
 }
 
 kotlin {
-  jvmToolchain(17)
-}
-
-tasks.installDist {
-  eachFile {
-    if (relativePath.pathString.startsWith("filelock/lib")) {
-      permissions {
-        other { write = true }
-        group { write = true }
-        user { write = true }
-      }
-    }
+  jvmToolchain {
+    languageVersion = JavaLanguageVersion.of(21)
+  }
+  compilerOptions {
+    jvmTarget = JVM_17
   }
 }
 
-application {
-  mainClass = "demo.Main2Kt"
+tasks.withType<JavaCompile>().configureEach {
+  options.release = kotlin.compilerOptions.jvmTarget.map { it.target.toInt() }
 }
 
-tasks.run.configure {
-  // lower, because I want to trigger GC and lockRef expiration
-  maxHeapSize = "32m"
+//java {
+//  toolchain {
+//    languageVersion = javaToolchainVersion
+//  }
+//}
+
+tasks.updateDaemonJvm {
+  languageVersion = JavaLanguageVersion.of(21)
+}
+
+idea {
+  module {
+    excludeDirs.addAll(
+      listOf(
+        ".kotlin",
+        ".idea",
+        "gradle/wrapper",
+      ).map(::file)
+    )
+  }
 }

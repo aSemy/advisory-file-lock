@@ -1,52 +1,68 @@
-package demo
+package dev.adamko.lokka.internal
 
-import java.io.ByteArrayOutputStream
-import java.io.RandomAccessFile
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
+import dev.adamko.lokka.internal.serialization.BinarySerializer
+import dev.adamko.lokka.internal.serialization.DataInputDecoder
+import dev.adamko.lokka.internal.serialization.DataOutputEncoder
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.absolute
-import kotlin.io.path.createDirectories
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import serialization.kxsBinary
 
+//sealed interface LockFileData {
+//
+//  fun encode(): ByteArray
+//
+//  data class V1(
+//    val readers: Set<Path>,
+//  ) : LockFileData
+//}
 
-internal class FileReadWriteLock(
-  lockFile: Path,
-  private val socketDir: Path = Path(System.getProperty("java.io.tmpdir")).resolve("frwl"),
-) : AutoCloseable {
+//@Serializable
+internal data class LockFileData(
+  val readers: Set<Path>,
+) {
+  fun addReader(reader: Path): LockFileData =
+    copy(readers = readers union setOf(reader))
 
-  init {
-    socketDir.createDirectories()
-  }
+  fun removeReader(reader: Path): LockFileData =
+    copy(readers = readers - setOf(reader))
 
-  private val accessFile: RandomAccessFile =
-    RandomAccessFile(lockFile.toFile(), "rw")
-
-//  fun isOpen(): Boolean = accessFile.channel.isOpen
-
-  fun readLock(): LockAccess {
-    return ReadLock(
-      channel = accessFile.channel,
-      socketDir = socketDir,
-    )
-  }
-
-  fun writeLock(): LockAccess {
-    return WriteLock(accessFile.channel)
-  }
-
-  override fun close() {
-    accessFile.close()
-  }
+//  companion object {
+//    val descriptorChecksum: String by lazy {
+//      computeChecksum(serializer().descriptor)
+//    }
+//  }
 }
 
+internal object LockFileDataSerializer : BinarySerializer<LockFileData> {
+  private const val VERSION: Int = 1
 
+  override fun serialize(encoder: DataOutputEncoder, value: LockFileData) {
+    encoder.apply {
+      encodeInt(VERSION)
+      beginCollection(value.readers.size)
+      value.readers.forEach { reader ->
+        encodeString(reader.invariantSeparatorsPathString)
+      }
+    }
+  }
+
+  override fun deserialize(decoder: DataInputDecoder): LockFileData {
+    val actualVersion = decoder.decodeInt()
+    if (actualVersion != VERSION) {
+      error("LockFileData version $actualVersion is not supported. Expected version $VERSION.")
+    }
+    val readersSize = decoder.decodeCollectionSize()
+    val readers = decoder.beginStructure(readersSize).run {
+      buildSet {
+        repeat(readersSize) {
+          val path = decodeString()
+          add(Path(path))
+        }
+      }
+    }
+    return LockFileData(readers)
+  }
+}
 
 //private fun computeChecksum(descriptor: SerialDescriptor): String {
 //  val messageDigest = MessageDigest.getInstance("SHA-256")

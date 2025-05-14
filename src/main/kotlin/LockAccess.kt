@@ -1,6 +1,6 @@
-package demo
+package dev.adamko.lokka
 
-internal sealed interface LockAccess : AutoCloseable {
+sealed interface LockAccess : AutoCloseable {
   fun lock()
   fun unlock()
   override fun close(): Unit = unlock()

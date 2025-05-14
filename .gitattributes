@@ -40,15 +40,6 @@ gradlew         text eol=lf
 
 *.a filter=lfs diff=lfs merge=lfs binary
 
-# Exclude external libs from GitHub language stats https://github.com/github/linguist/blob/v7.24.1/docs/overrides.md
-
-kayray-modules/interop-raygui/include/** linguist-vendored
-kayray-modules/interop-raylib/include/** linguist-vendored
-kayray-modules/interop-rfxgen/include/** linguist-vendored
-
-documentation/**/*.c linguist-documentation
-documentation/**/*.h linguist-documentation
-
 # Exclude files from exporting
 
 .gitattributes export-ignore

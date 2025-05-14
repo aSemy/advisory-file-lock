@@ -1,5 +1,6 @@
-package demo
+package dev.adamko.lokka
 
+import dev.adamko.lokka.internal.*
 import java.lang.ref.WeakReference
 import java.nio.channels.FileChannel
 import java.nio.file.Path

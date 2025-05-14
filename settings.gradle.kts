@@ -1,3 +1,7 @@
+@file:Suppress("UnstableApiUsage")
+
+rootProject.name = "lokka"
+
 pluginManagement {
   repositories {
     mavenCentral()
@@ -6,7 +10,16 @@ pluginManagement {
 }
 
 plugins {
-  id("org.gradle.toolchains.foojay-resolver-convention") version "0.9.0"
+  id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
 }
 
-rootProject.name = "filelock"
+dependencyResolutionManagement {
+  repositoriesMode = RepositoriesMode.PREFER_SETTINGS
+  repositories {
+    mavenCentral()
+  }
+}
+
+include(":demo")
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

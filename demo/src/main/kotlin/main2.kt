@@ -1,5 +1,8 @@
-package demo
+package dev.adamko.lokka.demo
 
+import dev.adamko.lokka.FileReadWriteLock
+import dev.adamko.lokka.withReadLock
+import dev.adamko.lokka.withWriteLock
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import kotlin.concurrent.thread
@@ -11,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 fun main(args: Array<String>) {
   val repetitions = args.firstOrNull()?.toIntOrNull() ?: 1000
 
-  val workingDir = Path("demo2").createDirectories()
+  val workingDir = Path("demo-data/main2").createDirectories()
   val lockFile = workingDir.resolve("a.lock")
   if (!lockFile.exists()) {
     lockFile.createFile()

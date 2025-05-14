@@ -1,4 +1,4 @@
-package demo
+package dev.adamko.lokka.demo
 
 import kotlin.concurrent.thread
 import kotlin.io.path.*
@@ -6,7 +6,7 @@ import kotlin.io.path.*
 fun main(args: Array<String>) {
   val repetitions = args.firstOrNull()?.toIntOrNull() ?: 1_000
 
-  val workingDir = Path("demo").createDirectories()
+  val workingDir = Path("demo-data/main1").createDirectories()
   val lockFile = workingDir.resolve("a.lock")
   if (!lockFile.exists()) {
     lockFile.createFile()

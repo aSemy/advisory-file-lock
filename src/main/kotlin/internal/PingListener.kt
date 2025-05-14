@@ -1,5 +1,6 @@
-package demo
+package dev.adamko.lokka.internal
 
+import dev.adamko.lokka.ReadLock
 import java.lang.ref.WeakReference
 import java.net.StandardProtocolFamily
 import java.net.UnixDomainSocketAddress
@@ -13,9 +14,7 @@ internal class PingListener(
   private val id: String,
   private val lockRef: WeakReference<ReadLock>,
   private val socketFile: Path,
-) : Thread(
-  "ReadLock-listener"
-) {
+) : Thread("ReadLock-listener") {
   init {
     isDaemon = true
 
