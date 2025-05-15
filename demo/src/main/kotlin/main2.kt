@@ -1,8 +1,8 @@
-package dev.adamko.lokka.demo
+package dev.adamko.advisoryfilelock.demo
 
-import dev.adamko.lokka.FileReadWriteLock
-import dev.adamko.lokka.withReadLock
-import dev.adamko.lokka.withWriteLock
+import dev.adamko.advisoryfilelock.FileReadWriteLock
+import dev.adamko.advisoryfilelock.withReadLock
+import dev.adamko.advisoryfilelock.withWriteLock
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import kotlin.concurrent.thread

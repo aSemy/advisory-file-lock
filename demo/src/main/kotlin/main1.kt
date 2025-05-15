@@ -1,4 +1,4 @@
-package dev.adamko.lokka.demo
+package dev.adamko.advisoryfilelock.demo
 
 import kotlin.concurrent.thread
 import kotlin.io.path.*

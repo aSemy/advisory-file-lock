@@ -5,17 +5,17 @@ plugins {
   application
 }
 
-group = "dev.adamko.lokka.demo"
+group = "dev.adamko.advisoryfilelock.demo"
 version = "0.0.1"
 
 dependencies {
-//  implementation(projects.lokka)
   implementation(project(":"))
+//  implementation(projects.filelock)
 }
 
 application {
-//  mainClass = "dev.adamko.lokka.demo.Main1Kt"
-  mainClass = "dev.adamko.lokka.demo.Main2Kt"
+//  mainClass = "dev.adamko.advisoryfilelock.demo.Main1Kt"
+  mainClass = "dev.adamko.advisoryfilelock.demo.Main2Kt"
 }
 
 tasks.run.configure {

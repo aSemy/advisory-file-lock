@@ -4,16 +4,11 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
 
 plugins {
   alias(libs.plugins.kotlin.jvm)
-//  kotlin("plugin.serialization") version libs.versions.kotlin
   idea
 }
 
-group = "dev.adamko.lokka"
+group = "dev.adamko.advisoryfilelock"
 version = "0.0.1"
-
-dependencies {
-//  implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
-}
 
 testing {
   suites.withType<JvmTestSuite>().configureEach {
@@ -22,13 +17,8 @@ testing {
   val test by suites.getting(JvmTestSuite::class) {
     dependencies {
       implementation("org.jetbrains.kotlin:kotlin-test")
-//      implementation(project.dependencies.kotlin("test"))
     }
   }
-//  suites {
-//    val test by getting(JvmTestSuite::class) {
-//    }
-//  }
 }
 
 kotlin {
@@ -43,12 +33,6 @@ kotlin {
 tasks.withType<JavaCompile>().configureEach {
   options.release = kotlin.compilerOptions.jvmTarget.map { it.target.toInt() }
 }
-
-//java {
-//  toolchain {
-//    languageVersion = javaToolchainVersion
-//  }
-//}
 
 tasks.updateDaemonJvm {
   languageVersion = JavaLanguageVersion.of(21)

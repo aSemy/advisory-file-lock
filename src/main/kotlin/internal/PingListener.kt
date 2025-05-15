@@ -1,6 +1,6 @@
-package dev.adamko.lokka.internal
+package dev.adamko.advisoryfilelock.internal
 
-import dev.adamko.lokka.ReadLock
+import dev.adamko.advisoryfilelock.ReadLock
 import java.lang.ref.WeakReference
 import java.net.StandardProtocolFamily
 import java.net.UnixDomainSocketAddress

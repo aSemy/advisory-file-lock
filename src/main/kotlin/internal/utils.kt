@@ -1,7 +1,7 @@
-package dev.adamko.lokka.internal
+package dev.adamko.advisoryfilelock.internal
 
-import dev.adamko.lokka.internal.serialization.LockFileDataSerializer
-import dev.adamko.lokka.internal.serialization.binaryFormat
+import dev.adamko.advisoryfilelock.internal.serialization.LockFileDataSerializer
+import dev.adamko.advisoryfilelock.internal.serialization.binaryFormat
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel

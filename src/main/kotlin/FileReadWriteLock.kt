@@ -1,4 +1,4 @@
-package dev.adamko.lokka
+package dev.adamko.advisoryfilelock
 
 import java.io.RandomAccessFile
 import java.nio.file.Path
@@ -37,7 +37,7 @@ class FileReadWriteLock(
 
   companion object {
     private val defaultSocketDir: Path by lazy {
-      val dir = System.getProperty("dev.adamko.lokka.socketDir")
+      val dir = System.getProperty("dev.adamko.advisoryfilelock.socketDir")
         ?: System.getProperty("java.io.tmpdir")
 
       Path(dir).resolve("frwl")

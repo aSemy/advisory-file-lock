@@ -1,4 +1,4 @@
-package dev.adamko.lokka.internal
+package dev.adamko.advisoryfilelock.internal
 
 import java.nio.file.Path
 

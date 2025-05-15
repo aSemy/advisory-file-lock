@@ -1,4 +1,4 @@
-package dev.adamko.lokka.demo
+package dev.adamko.advisoryfilelock.demo
 
 import java.io.RandomAccessFile
 import java.nio.channels.FileChannel

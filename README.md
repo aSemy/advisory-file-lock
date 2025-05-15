@@ -2,8 +2,27 @@
 
 Kotlin/JVM library for managing advisory file locks.
 
-Limit access to a specific file or directory across threads or processes.
+Uses a lock file to control read/write access to critical sections across threads or processes.
+
+### Features
+
+- Multiple concurrent readers are permitted.
+- A read-lock can only be obtained if there are no write-locks.
+- Only a single writer is permitted
+- A write-lock can only be obtained if there are no other locks (no other readers or writers have locks).
+
+The lock is only advisory, and cannot prevent misuse (like a writing data while under a read-only lock).
 
 The performance is not good: Use when accuracy is more important than speed.
 
-Requires Java 17: Uses Unix domain sockets. 
+Locks can communicate with each other using unix domain sockets.
+If lock-holding processes do not gracefully release obtained locks, then the lock, then
+
+### Usage
+
+Requires Java 17:
+Uses [UnixDomainSocketAddress](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/UnixDomainSocketAddress.html).
+
+### Contributing
+
+Requires Java 21 for running Gradle and compiling.

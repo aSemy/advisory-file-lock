@@ -1,6 +1,6 @@
-package dev.adamko.lokka
+package dev.adamko.advisoryfilelock
 
-import dev.adamko.lokka.internal.*
+import dev.adamko.advisoryfilelock.internal.*
 import java.io.IOException
 import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer

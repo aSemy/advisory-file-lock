@@ -1,4 +1,4 @@
-package dev.adamko.lokka.internal.serialization
+package dev.adamko.advisoryfilelock.internal.serialization
 
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream

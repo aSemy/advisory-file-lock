@@ -1,4 +1,4 @@
-package dev.adamko.lokka
+package dev.adamko.advisoryfilelock
 
 sealed interface LockAccess : AutoCloseable {
   fun lock()

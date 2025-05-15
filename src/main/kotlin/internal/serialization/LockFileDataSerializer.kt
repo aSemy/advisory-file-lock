@@ -1,7 +1,7 @@
-package dev.adamko.lokka.internal.serialization
+package dev.adamko.advisoryfilelock.internal.serialization
 
 
-import dev.adamko.lokka.internal.LockFileData
+import dev.adamko.advisoryfilelock.internal.LockFileData
 import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString
 

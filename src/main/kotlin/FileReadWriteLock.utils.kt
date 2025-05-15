@@ -1,9 +1,9 @@
-package dev.adamko.lokka
+package dev.adamko.advisoryfilelock
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
-import dev.adamko.lokka.internal.*
+import dev.adamko.advisoryfilelock.internal.*
 
 /**
  * Executes the given [action] under the read lock of this lock.
