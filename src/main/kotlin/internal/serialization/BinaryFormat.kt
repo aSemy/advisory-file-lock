@@ -9,22 +9,26 @@ internal val binaryFormat: BinaryFormat = BinaryFormat()
 /** [`https://github.com/Kotlin/kotlinx.internal.serialization/blob/master/docs/formats.md#efficient-binary-format`](https://github.com/Kotlin/kotlinx.internal.serialization/blob/master/docs/formats.md#efficient-binary-format) */
 internal class BinaryFormat {
 
-  fun <T> encodeToByteArray(serializer: BinarySerializer<T>, value: T): ByteArray {
-    val outputStream = ByteArrayOutputStream()
-    val output = DataOutputStream(outputStream)
-    val encoder = DataOutputEncoder(output)
-    encoder.encodeSerializableValue(serializer, value)
-    return outputStream.toByteArray()
+  fun <T> encodeToByteArray(
+    serializer: BinarySerializer<T>,
+    value: T,
+  ): ByteArray {
+    ByteArrayOutputStream().use { outputStream ->
+      val output = DataOutputStream(outputStream)
+      val encoder = DataOutputEncoder(output)
+      encoder.encodeSerializableValue(serializer, value)
+      return outputStream.toByteArray()
+    }
   }
 
   fun <T> decodeFromByteArray(
     deserializer: BinarySerializer<T>,
     bytes: ByteArray
   ): T {
-    val inputStream = bytes.inputStream()
-    val input = DataInputStream(inputStream)
-    val decoder = DataInputDecoder(input)
-    return decoder.decodeSerializableValue(deserializer)
+    DataInputStream(bytes.inputStream()).use { input ->
+      val decoder = DataInputDecoder(input)
+      return decoder.decodeSerializableValue(deserializer)
+    }
   }
 }
 
