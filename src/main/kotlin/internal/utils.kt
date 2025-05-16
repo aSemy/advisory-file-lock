@@ -47,7 +47,7 @@ internal fun FileChannel.readLockFileData(): LockFileData {
   }
   position(0)
   val bytes = ByteArrayOutputStream().use { os ->
-    val buf = ByteBuffer.allocate(1024)
+    val buf = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE)
     while (read(buf) > 0) {
       os.write(buf.array(), 0, buf.limit())
       buf.clear()
