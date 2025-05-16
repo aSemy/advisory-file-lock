@@ -4,6 +4,7 @@ import dev.adamko.advisoryfilelock.internal.*
 import java.lang.ref.WeakReference
 import java.nio.channels.FileChannel
 import java.nio.file.Path
+import java.util.logging.Logger
 import kotlin.io.path.absolute
 
 /**
@@ -34,7 +35,7 @@ internal class ReadLock(
 
   override fun lock() {
     channel.lockLenient().use { _ ->
-      println("[reader $id] Locking")
+      logger.fine("[reader $id] Locking")
       val data = channel.readLockFileData()
       val newData = data.addReader(socketFile)
       channel.writeLockFileData(newData)
@@ -43,12 +44,12 @@ internal class ReadLock(
 
   override fun unlock() {
     channel.lockLenient().use { _ ->
-      println("[reader $id] Unlocking")
+      logger.fine("[reader $id] Unlocking")
 //      pingListener?.interrupt()
 //      pingListener = null
       val data = channel.readLockFileData()
       if (socketFile !in data.readers) {
-        System.err.println("[reader $id] lock file data does not contain $socketFile")
+        logger.warning("[reader $id] lock file data does not contain $socketFile")
       } else {
         val newData = data.removeReader(socketFile)
         channel.writeLockFileData(newData)
@@ -58,5 +59,9 @@ internal class ReadLock(
 
   override fun close() {
     unlock()
+  }
+
+  companion object {
+    private val logger: Logger = Logger.getLogger(ReadLock::class.qualifiedName)
   }
 }

@@ -8,6 +8,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.ClosedByInterruptException
 import java.nio.channels.ServerSocketChannel
 import java.nio.file.Path
+import java.util.logging.Logger
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class PingListener(
@@ -24,7 +25,7 @@ internal class PingListener(
   override fun run() {
     uds()
 //    net()
-    println("[reader $id] Finished run!")
+    logger.fine("[reader $id] Finished run!")
   }
 
   private fun uds() {
@@ -38,40 +39,40 @@ internal class PingListener(
           configureBlocking(false)
         }
 
-    println("[reader $id] Listening for ping on $socketAddress")
+    logger.fine("[reader $id] Listening for ping on $socketAddress")
     serverSocket.use { socket ->
       while (!interrupted()) {
         if (lockRef.get() == null) {
-          println("[reader $id] lockRef expired, closing.")
+          logger.fine("[reader $id] lockRef expired, closing.")
           break
         }
 
         val conn = try {
           socket.accept() ?: continue
         } catch (ex: ClosedByInterruptException) {
-          println("[reader $id] listener closed $ex")
+          logger.fine("[reader $id] listener closed $ex")
           continue
         }
-//        println("[reader $id] Received connection from $conn")
+//        logger.fine("[reader $id] Received connection from $conn")
         conn.use { client ->
           val buf = ByteBuffer.allocate(Int.SIZE_BYTES)
 
           val readCount = client.read(buf)
           if (readCount <= 0) {
-            println("[reader $id] connection closed")
+            logger.fine("[reader $id] connection closed")
           } else {
             val message = buf.flip().getInt()
             val response = when (message) {
               1    -> 1
               else -> -1
             }
-            println("[reader $id] Handling request $message, responding with $response")
+            logger.fine("[reader $id] Handling request $message, responding with $response")
             client.write(buf.clear().putInt(response))
           }
         }
         threadSleep(100.milliseconds)
       }
-      println("[reader $id] Finished thread!")
+      logger.fine("[reader $id] Finished thread!")
     }
   }
 
@@ -139,4 +140,8 @@ internal class PingListener(
 //    }
 //    println("[reader $id] Finished run!")
 //  }
+
+  companion object {
+    private val logger: Logger = Logger.getLogger(PingListener::class.qualifiedName)
+  }
 }

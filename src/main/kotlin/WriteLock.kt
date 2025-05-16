@@ -8,6 +8,7 @@ import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.channels.SocketChannel
 import java.nio.file.Path
+import java.util.logging.Logger
 import kotlin.io.path.exists
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
@@ -28,7 +29,7 @@ internal class WriteLock(
       if (data.readers.isEmpty()) {
         return lock
       } else {
-        println("[writer] Waiting for ${data.readers.size} readers to finish")
+        logger.fine("[writer] Waiting for ${data.readers.size} readers to finish")
         refreshReaders()
         lock.release()
         Thread.sleep(Random.nextLong(25, 125))
@@ -58,7 +59,7 @@ internal class WriteLock(
       val allReaders = actualData.readers union storedData.readers
       val activeAndStoredReaders = aliveReaders union storedData.readers
       val mismatch = allReaders subtract activeAndStoredReaders
-      println("stored readers != alive readers\n\tmismatch:$mismatch\n\tstored:${storedData}\n\tactual:${actualData}")
+      logger.fine("stored readers != alive readers\n\tmismatch:$mismatch\n\tstored:${storedData}\n\tactual:${actualData}")
       channel.writeLockFileData(actualData)
     }
   }
@@ -86,17 +87,21 @@ internal class WriteLock(
 
         val isAlive = response == 1
         if (!isAlive) {
-          println("[writer] Reader $socketPath is dead")
+          logger.fine("[writer] Reader $socketPath is dead")
         }
         return isAlive
       } catch (ex: IOException) {
-        System.err.println("[writer] failed to check reader $socketPath: $ex")
+        logger.warning("[writer] failed to check reader $socketPath: $ex")
         threadSleep(500.milliseconds)
         continue
       }
     }
-    System.err.println("[writer] failed to check reader $socketPath after $attempts attempts")
+    logger.warning("[writer] failed to check reader $socketPath after $attempts attempts")
 
     return false
+  }
+
+  companion object {
+    private val logger: Logger = Logger.getLogger(WriteLock::class.qualifiedName)
   }
 }
