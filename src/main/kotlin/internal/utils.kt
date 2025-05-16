@@ -17,6 +17,9 @@ internal tailrec fun FileChannel.lockLenient(): FileLock {
     // ignore - process is already locked by this process
     Thread.sleep(Random.nextLong(25, 125))
   }
+  if (Thread.interrupted()) {
+    throw InterruptedException("Interrupted while waiting for lock on ${this@lockLenient}")
+  }
   return lockLenient()
 }
 
