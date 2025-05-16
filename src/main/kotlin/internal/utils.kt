@@ -10,6 +10,9 @@ import java.nio.channels.OverlappingFileLockException
 import kotlin.random.Random
 import kotlin.time.Duration
 
+/**
+ * Leniently obtain a [FileLock] for the channel.
+ */
 internal tailrec fun FileChannel.lockLenient(): FileLock {
   try {
     return lock()
@@ -38,10 +41,12 @@ internal fun randomAlphaNumericString(size: Int = 16): String {
   }
 }
 
+
 internal fun FileChannel.writeLockFileData(data: LockFileData) {
   val encoded = binaryFormat.encodeToByteArray(LockFileDataSerializer, data)
   write(ByteBuffer.wrap(encoded), 0)
 }
+
 
 internal fun FileChannel.readLockFileData(): LockFileData {
   if (size() == 0L) {
