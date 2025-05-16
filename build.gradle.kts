@@ -16,7 +16,12 @@ testing {
   }
   val test by suites.getting(JvmTestSuite::class) {
     dependencies {
-      implementation("org.jetbrains.kotlin:kotlin-test")
+      implementation("org.junit.jupiter:junit-jupiter:5.12.2")
+      runtimeOnly("org.junit.platform:junit-platform-launcher")
+
+      implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.10.2"))
+      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     }
   }
 }
