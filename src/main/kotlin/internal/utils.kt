@@ -45,7 +45,7 @@ internal fun FileChannel.writeLockFileData(data: LockFileData) {
 
 internal fun FileChannel.readLockFileData(): LockFileData {
   if (size() == 0L) {
-    println("Lock file is empty, returning empty data")
+//    println("Lock file is empty, returning empty data")
     return LockFileData(sortedSetOf())
   }
   position(0)
