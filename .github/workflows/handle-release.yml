@@ -1,0 +1,116 @@
+name: Handle Drafted Release
+
+on:
+  release:
+    types:
+      - released
+      - prereleased
+      - edited
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "Gradle Task: ${{ github.workflow }} @ ${{ github.head_ref || github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  handle-release:
+    name: Process Draft Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          #ref: 'refs/tags/${{ github.event.release.tag_name }}'
+          fetch-tags: true
+          # https://github.com/actions/checkout/issues/1471#issuecomment-1755639487
+          fetch-depth: 0
+#          filter: tree:0
+
+      - name: tmp debug
+        shell: bash
+        run: |
+          git describe --tags
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-cleanup: always
+          # write build cache on 'main' and 'release' branches, or tags (default is 'main' only)
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/heads/release') && !startsWith(github.ref, 'refs/tags/') }}
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+
+      - name: Create Release assets
+        id: prepare_release_assets
+        shell: bash
+        run: |
+          output=$(./gradlew prepareGitHubReleaseFiles)
+          echo "$output"
+          outputDir=$(echo "$output" | grep "\[:prepareGitHubReleaseFiles\] outputDir:" | sed 's/.*outputDir://')
+          echo "outputDir: $(outputDir)"
+          echo "outputDir=$outputDir" >> "$GITHUB_OUTPUT"
+
+      - name: Get Release data
+        id: get_release_data
+        uses: octokit/request-action@v2.4.0
+        with:
+          route: ${{ format('GET /repos/{0}/{1}/releases/tags/{2}', github.repository_owner, github.event.repository.name, github.event.release.tag_name) }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      #      - name: Remove Existing Assets from Release
+      #        if: steps.get_release.outputs.data
+      #        run: |
+      #          releaseId=$(jq '.id' <<<"${{ steps.get_release.outputs.data }}")
+      #          assets=$(jq -c '.assets[]' <<<"${{ steps.get_release.outputs.data }}")
+      #          for asset in ${assets}; do
+      #            asset_id=$(jq '.id' <<<"${asset}")
+      #            echo "Deleting asset $asset_id"
+      #            curl -X DELETE \
+      #              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+      #              https://api.github.com/repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/assets/$asset_id
+      #          done
+
+
+      - name: Upload Prepared Assets to Draft Release
+        shell: bash
+        #          releaseId=$(jq .id <<< "${{ steps.get_release_data.outputs.data }}")
+        #releaseData='${{ steps.get_release_data.outputs.data }}'
+        #releaseData=$(cat <<EOF ${{ toJson(steps.get_release_data.outputs.data) }} EOF)
+        run: |
+          releaseData='${{ steps.get_release_data.outputs.data }}'
+          #echo "Release Data: $releaseData"
+          releaseId=$(echo "$releaseData" | jq -r '.id')
+          outputDir='${{ steps.prepare_release_assets.outputs.outputDir }}'
+          echo "Uploading files from $outputDir to release ID $releaseId"
+          for file in "$outputDir"/*; do
+            echo "Uploading $file"
+            gh release upload ${{github.event.release.tag_name}} $file
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Upload build reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report-${{ runner.os }}${{ github.action }}
+          path: |
+            **/build/reports/
+            **/*.hprof
+            **/*.log
+          if-no-files-found: ignore
