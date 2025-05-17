@@ -13,6 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
   val repetitions = args.firstOrNull()?.toIntOrNull() ?: 1000
+  val readers = args.getOrNull(1)?.toIntOrNull() ?: 1
 
   val workingDir = Path("demo-data/main2").createDirectories()
   val lockFile = workingDir.resolve("a.lock")
@@ -27,7 +28,7 @@ fun main(args: Array<String>) {
 
   var c = 0
 
-  repeat(5) { i ->
+  repeat(readers) { i ->
     thread(isDaemon = true, name = "reader$i") {
       FileReadWriteLock(lockFile).use { locker ->
         while (true) {
@@ -37,21 +38,6 @@ fun main(args: Array<String>) {
             println("${Thread.currentThread().name}: current = $current")
             threadSleep((i + 1).seconds)
           }
-//        RandomAccessFile(lockFile, read = true, write = true).use { lockFileAccess ->
-//          val channel = lockFileAccess.channel
-//          try {
-//            channel.acquireReadLock().use {
-//              channel.writeInt(channel.readInt() + 1)
-//            }
-//            val current = dataFile.readText().toInt()
-//            println("${Thread.currentThread().name}: current = $current")
-//            Thread.sleep(1.seconds.inWholeMilliseconds)
-//          } finally {
-//            channel.acquireReadLock().use {
-//              channel.writeInt(channel.readInt() - 1)
-//            }
-//          }
-//        }
           threadSleep((i + 1).seconds * 2)
         }
       }

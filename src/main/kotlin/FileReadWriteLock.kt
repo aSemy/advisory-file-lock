@@ -1,5 +1,7 @@
 package dev.adamko.advisoryfilelock
 
+import dev.adamko.advisoryfilelock.internal.ReadLockImpl
+import dev.adamko.advisoryfilelock.internal.WriteLockImpl
 import java.io.RandomAccessFile
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -21,14 +23,16 @@ class FileReadWriteLock(
 //  fun isOpen(): Boolean = accessFile.channel.isOpen
 
   fun readLock(): LockAccess {
-    return ReadLock(
+    return ReadLockImpl(
       channel = accessFile.channel,
       socketDir = socketDir,
     )
   }
 
   fun writeLock(): LockAccess {
-    return WriteLock(accessFile.channel)
+    return WriteLockImpl(
+      channel = accessFile.channel,
+    )
   }
 
   override fun close() {

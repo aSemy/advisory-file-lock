@@ -12,17 +12,31 @@ import kotlin.time.Duration
 
 /**
  * Leniently obtain a [FileLock] for the channel.
+ *
+ * @throws [InterruptedException] if the current thread is interrupted before the lock can be acquired.
  */
 internal tailrec fun FileChannel.lockLenient(): FileLock {
-  try {
-    return lock()
-  } catch (_: OverlappingFileLockException) {
-    // ignore - process is already locked by this process
-    Thread.sleep(Random.nextLong(25, 125))
-  }
   if (Thread.interrupted()) {
-    throw InterruptedException("Interrupted while waiting for lock on ${this@lockLenient}")
+    throw InterruptedException("Interrupted while waiting for lock on FileChannel@${this@lockLenient.hashCode()}")
   }
+  val lock = try {
+    tryLock()
+  } catch (_: OverlappingFileLockException) {
+    // ignore exception - it means the lock is already held by this process.
+    null
+  }
+
+  if (lock != null) {
+    return lock
+  }
+
+  try {
+    Thread.sleep(Random.nextLong(25, 125))
+  } catch (e: InterruptedException) {
+    Thread.currentThread().interrupt()
+    throw e
+  }
+
   return lockLenient()
 }
 
@@ -50,7 +64,6 @@ internal fun FileChannel.writeLockFileData(data: LockFileData) {
 
 internal fun FileChannel.readLockFileData(): LockFileData {
   if (size() == 0L) {
-//    println("Lock file is empty, returning empty data")
     return LockFileData(sortedSetOf())
   }
   position(0)

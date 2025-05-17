@@ -7,19 +7,25 @@ sealed interface LockAccess : AutoCloseable {
    *
    * Does nothing if the lock is already acquired.
    *
-   * Blocks the current thread until the lock is acquired,
-   * or the thread is interrupted.
+   * Blocks the current thread until the lock is acquired.
+   *
+   * Throws [InterruptedException] if the current thread is interrupted
+   * before the lock is acquired.
    */
+  @Throws(InterruptedException::class)
   fun lock()
 
   /**
    * Releases the lock.
    *
-   * Might block the current thread until the lock is released,
-   * or the thread is interrupted.
+   * Might block the current thread until the lock is released.
+   *
+   * Throws [InterruptedException] if the current thread is interrupted
+   * before the lock is released.
    *
    * Does nothing if the lock is already released.
    */
+  @Throws(InterruptedException::class)
   fun unlock()
 
   /**
@@ -27,6 +33,7 @@ sealed interface LockAccess : AutoCloseable {
    *
    * Can be used as a resource in a `use {}` block.
    */
+  @Throws(InterruptedException::class)
   override fun close(): Unit =
     unlock()
 }

@@ -22,6 +22,8 @@ testing {
       implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.10.2"))
       implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
       implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+
+      implementation("io.kotest:kotest-assertions-core:5.9.1")
     }
   }
 }
