@@ -1,6 +1,6 @@
 package dev.adamko.advisoryfilelock.internal
 
-import dev.adamko.advisoryfilelock.ReadLock
+import dev.adamko.advisoryfilelock.LockAccess
 import java.lang.ref.WeakReference
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -14,13 +14,12 @@ import kotlin.io.path.absolute
  */
 internal class ReadLockImpl(
   private val channel: FileChannel,
-  private val id: String = randomAlphaNumericString(),
   socketDir: Path,
-) : ReadLock() {
+  private val id: String = randomAlphaNumericString(),
+) : LockAccess.ReadLock() {
 
   private val socketFile: Path =
-    socketDir.resolve(id)
-      .absolute()
+    socketDir.resolve(id).absolute()
 
   init {
     PingListener(
@@ -57,11 +56,7 @@ internal class ReadLockImpl(
     }
   }
 
-  override fun close() {
-    unlock()
-  }
-
   companion object {
-    private val logger: Logger = Logger.getLogger(ReadLock::class.qualifiedName)
+    private val logger: Logger = Logger.getLogger(LockAccess.ReadLock::class.qualifiedName)
   }
 }

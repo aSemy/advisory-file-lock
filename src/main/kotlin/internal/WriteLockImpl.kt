@@ -1,6 +1,6 @@
 package dev.adamko.advisoryfilelock.internal
 
-import dev.adamko.advisoryfilelock.WriteLock
+import dev.adamko.advisoryfilelock.LockAccess
 import java.io.IOException
 import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
@@ -15,7 +15,8 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal class WriteLockImpl(
   private val channel: FileChannel,
-) : WriteLock() {
+) : LockAccess.WriteLock() {
+
   private var lock: FileLock? = null
 
   override fun lock() {
@@ -43,10 +44,6 @@ internal class WriteLockImpl(
 
   override fun unlock() {
     lock?.release()
-  }
-
-  override fun close() {
-    unlock()
   }
 
   private fun refreshReaders() {
@@ -102,6 +99,6 @@ internal class WriteLockImpl(
   }
 
   companion object {
-    private val logger: Logger = Logger.getLogger(WriteLock::class.qualifiedName)
+    private val logger: Logger = Logger.getLogger(LockAccess.WriteLock::class.qualifiedName)
   }
 }

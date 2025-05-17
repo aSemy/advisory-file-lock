@@ -6,7 +6,6 @@ import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.nio.file.Path
 import kotlin.concurrent.thread
-import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -23,15 +22,14 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ): Unit = runTest {
-    val lockFile = workingDir.resolve("a.lock")
-      .createFile()
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
 
     var counter = 0
 
     val n = 1000  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
 
-    FileReadWriteLock(lockFile).use { locker ->
+    lockFile.use { locker ->
       repeat(n) {
         coroutineScope {
           launch {
@@ -53,19 +51,16 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = workingDir.resolve("a.lock")
-      .createFile()
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
 
-    val rwl = FileReadWriteLock(lockFile)
-
-    rwl.writeLock().lock()
+    lockFile.writeLock().lock()
 
     var thrown: Throwable? = null
 
     val t = thread {
       try {
         println("acquiring read lock...")
-        rwl.withReadLock {
+        lockFile.withReadLock {
           println("acquired read lock!")
           error("read lock acquisition should be interrupted")
         }
@@ -93,16 +88,13 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = workingDir.resolve("a.lock")
-      .createFile()
-
-    val rwl = FileReadWriteLock(lockFile)
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
 
     var twoReadLockObtained = false
 
     val t = thread {
-      rwl.withReadLock {
-        rwl.withReadLock {
+      lockFile.withReadLock {
+        lockFile.withReadLock {
           twoReadLockObtained = true
         }
       }
@@ -118,17 +110,14 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = workingDir.resolve("a.lock")
-      .createFile()
-
-    val rwl = FileReadWriteLock(lockFile)
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
 
     var writeLockObtained = false
 
     val t = thread {
       try {
-        rwl.withReadLock {
-          rwl.withWriteLock {
+        lockFile.withReadLock {
+          lockFile.withWriteLock {
             writeLockObtained = true
           }
         }
@@ -148,17 +137,14 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = workingDir.resolve("a.lock")
-      .createFile()
-
-    val rwl = FileReadWriteLock(lockFile)
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
 
     var readLockObtained = false
 
     val t = thread {
       try {
-        rwl.withWriteLock {
-          rwl.withReadLock {
+        lockFile.withWriteLock {
+          lockFile.withReadLock {
             readLockObtained = true
           }
         }
@@ -180,9 +166,16 @@ class FileLockTest {
 
   @Test
   fun `test exception releases read lock`() {
+    // TODO
   }
 
   @Test
   fun `test exception releases write lock`() {
+    // TODO
+  }
+
+  @Test
+  fun `verify temp dir can be modified using system property`() {
+    // TODO test dev.adamko.advisoryfilelock.socketDir
   }
 }

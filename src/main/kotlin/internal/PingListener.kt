@@ -1,6 +1,6 @@
 package dev.adamko.advisoryfilelock.internal
 
-import dev.adamko.advisoryfilelock.ReadLock
+import dev.adamko.advisoryfilelock.LockAccess
 import java.io.IOException
 import java.lang.ref.WeakReference
 import java.net.ServerSocket
@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.seconds
 
 internal class PingListener(
   private val id: String,
-  private val lockRef: WeakReference<ReadLock>,
+  private val lockRef: WeakReference<LockAccess.ReadLock>,
   private val socketFile: Path,
 ) : Thread("ReadLock-listener") {
   init {

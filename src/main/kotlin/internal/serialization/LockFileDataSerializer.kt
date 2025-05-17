@@ -25,8 +25,8 @@ internal object LockFileDataSerializer : BinarySerializer<LockFileData> {
       error("LockFileData version $actualVersion is not supported. Expected version $VERSION.")
     }
     val readersSize = decoder.decodeCollectionSize()
-    val readers = decoder.beginStructure(readersSize).run {
-      buildSet {
+    val readers = buildSet {
+      decoder.beginStructure(readersSize).run {
         repeat(readersSize) {
           val path = decodeString()
           add(Path(path))

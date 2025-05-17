@@ -1,6 +1,6 @@
 package dev.adamko.advisoryfilelock.demo
 
-import dev.adamko.advisoryfilelock.FileReadWriteLock
+import dev.adamko.advisoryfilelock.LockFile
 import dev.adamko.advisoryfilelock.withReadLock
 import dev.adamko.advisoryfilelock.withWriteLock
 import java.nio.ByteBuffer
@@ -30,7 +30,7 @@ fun main(args: Array<String>) {
 
   repeat(readers) { i ->
     thread(isDaemon = true, name = "reader$i") {
-      FileReadWriteLock(lockFile).use { locker ->
+      LockFile(lockFile).use { locker ->
         while (true) {
           Thread.sleep(i.seconds.inWholeMilliseconds)
           locker.withReadLock {
@@ -52,7 +52,7 @@ fun main(args: Array<String>) {
       System.gc()
     }
 
-    FileReadWriteLock(lockFile).use { locker ->
+    LockFile(lockFile).use { locker ->
       locker.withWriteLock {
         val current = dataFile.readText().toInt()
         println("[writer] current = $current")
@@ -66,7 +66,7 @@ fun main(args: Array<String>) {
   println("c = $c")
 
   val endDataVal =
-    FileReadWriteLock(lockFile).use { locker ->
+    LockFile(lockFile).use { locker ->
       locker.withReadLock {
         dataFile.readText().toInt()
       }

@@ -23,7 +23,7 @@ internal class BinaryFormat {
 
   fun <T> decodeFromByteArray(
     deserializer: BinarySerializer<T>,
-    bytes: ByteArray
+    bytes: ByteArray,
   ): T {
     DataInputStream(bytes.inputStream()).use { input ->
       val decoder = DataInputDecoder(input)
@@ -40,15 +40,15 @@ internal interface BinarySerializer<T : Any?> {
 internal class DataOutputEncoder(
   private val output: DataOutputStream,
 ) {
-  fun encodeBoolean(value: Boolean): Unit = output.writeBoolean(value)
-  fun encodeByte(value: Byte): Unit = output.writeByte(value.toInt())
-  fun encodeChar(value: Char): Unit = output.writeChar(value.code)
-  fun encodeDouble(value: Double): Unit = output.writeDouble(value)
-  fun encodeEnum(index: Int): Unit = output.writeInt(index)
-  fun encodeFloat(value: Float): Unit = output.writeFloat(value)
+  //fun encodeBoolean(value: Boolean): Unit = output.writeBoolean(value)
+  //fun encodeByte(value: Byte): Unit = output.writeByte(value.toInt())
+  //fun encodeChar(value: Char): Unit = output.writeChar(value.code)
+  //fun encodeDouble(value: Double): Unit = output.writeDouble(value)
+  //fun encodeEnum(index: Int): Unit = output.writeInt(index)
+  //fun encodeFloat(value: Float): Unit = output.writeFloat(value)
   fun encodeInt(value: Int): Unit = output.writeInt(value)
-  fun encodeLong(value: Long): Unit = output.writeLong(value)
-  fun encodeShort(value: Short): Unit = output.writeShort(value.toInt())
+  //fun encodeLong(value: Long): Unit = output.writeLong(value)
+  //fun encodeShort(value: Short): Unit = output.writeShort(value.toInt())
   fun encodeString(value: String) {
     val bytes = value.toByteArray(Charsets.UTF_8)
     encodeCompactSize(bytes.size)
@@ -59,8 +59,8 @@ internal class DataOutputEncoder(
     encodeCompactSize(collectionSize)
   }
 
-  fun encodeNull(): Unit = encodeBoolean(false)
-  fun encodeNotNullMark(): Unit = encodeBoolean(true)
+  //fun encodeNull(): Unit = encodeBoolean(false)
+  //fun encodeNotNullMark(): Unit = encodeBoolean(true)
 
   fun <T> encodeSerializableValue(serializer: BinarySerializer<T>, value: T) {
     serializer.serialize(this, value)
@@ -82,17 +82,17 @@ internal class DataInputDecoder(
   private var elementsCount: Int = 0,
 ) {
 
-  private var elementIndex = 0
-
-  fun decodeBoolean(): Boolean = input.readBoolean()
-  fun decodeByte(): Byte = input.readByte()
-  fun decodeChar(): Char = input.readChar()
-  fun decodeDouble(): Double = input.readDouble()
-  fun decodeEnum(): Int = input.readInt()
-  fun decodeFloat(): Float = input.readFloat()
+  //private var elementIndex = 0
+  //
+  //fun decodeBoolean(): Boolean = input.readBoolean()
+  //fun decodeByte(): Byte = input.readByte()
+  //fun decodeChar(): Char = input.readChar()
+  //fun decodeDouble(): Double = input.readDouble()
+  //fun decodeEnum(): Int = input.readInt()
+  //fun decodeFloat(): Float = input.readFloat()
   fun decodeInt(): Int = input.readInt()
-  fun decodeLong(): Long = input.readLong()
-  fun decodeShort(): Short = input.readShort()
+  //  fun decodeLong(): Long = input.readLong()
+  //  fun decodeShort(): Short = input.readShort()
   fun decodeString(): String {
     val size = decodeCompactSize()
     val bytes = ByteArray(size)
@@ -100,20 +100,20 @@ internal class DataInputDecoder(
     return bytes.toString(Charsets.UTF_8)
   }
 
-  fun decodeElementIndex(): Int {
-    if (elementIndex == elementsCount) return -1 // CompositeDecoder.DECODE_DONE
-    return elementIndex++
-  }
+  //fun decodeElementIndex(): Int {
+  //  if (elementIndex == elementsCount) return -1 // CompositeDecoder.DECODE_DONE
+  //  return elementIndex++
+  //}
 
   fun beginStructure(elementsCount: Int) =
     DataInputDecoder(input, elementsCount)
 
-//  fun decodeSequentially(): Boolean = true
+  //fun decodeSequentially(): Boolean = true
 
   fun decodeCollectionSize(): Int =
     decodeCompactSize().also { elementsCount = it }
 
-  fun decodeNotNullMark(): Boolean = decodeBoolean()
+  //fun decodeNotNullMark(): Boolean = decodeBoolean()
 
   fun <T> decodeSerializableValue(
     deserializer: BinarySerializer<T>,

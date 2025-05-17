@@ -2,6 +2,10 @@ package dev.adamko.advisoryfilelock
 
 sealed interface LockAccess : AutoCloseable {
 
+  abstract class ReadLock internal constructor() : LockAccess
+
+  abstract class WriteLock internal constructor() : LockAccess
+
   /**
    * Acquires the lock.
    *
@@ -36,4 +40,6 @@ sealed interface LockAccess : AutoCloseable {
   @Throws(InterruptedException::class)
   override fun close(): Unit =
     unlock()
+
+
 }
