@@ -16,9 +16,30 @@ The lock is only advisory, and cannot prevent misuse (like a writing data while 
 The performance is not good: Use when accuracy is more important than speed.
 
 Locks can communicate with each other using unix domain sockets.
-If lock-holding processes do not gracefully release obtained locks, then the lock, then
+The sockets are used to verify the processes holding the locks are still alive
+(so if a process unexpectedly exits the locks are not held indefinitely).
 
 ### Usage
+
+Artifacts are published to GitHub Releases.
+
+```kotlin
+// build.gradle.kts
+
+
+repositories {
+  ivy("https://github.com/") {
+    name = "GitHub Releases"
+    patternLayout {
+      setM2compatible(true)
+      artifact("[organisation]/releases/download/v[revision]/[module]-[revision].[ext]")
+    }
+    metadataSources {
+      gradleMetadata()
+    }
+  }
+}
+```
 
 Requires Java 17:
 Uses [UnixDomainSocketAddress](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/UnixDomainSocketAddress.html).

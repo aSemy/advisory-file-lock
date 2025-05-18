@@ -8,14 +8,13 @@ import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
 
-
 plugins {
   alias(libs.plugins.kotlin.jvm)
   `maven-publish`
   idea
 }
 
-group = "dev.adamko.advisoryfilelock"
+group = "aSemy.advisory-file-lock"
 version = object {
   private val version: Provider<String> = project.gitVersion
   override fun toString(): String = version.orNull ?: "unknown"
@@ -155,7 +154,7 @@ val prepareGitHubReleaseFiles by tasks.registering {
       }
       .toSet()
 
-    val renamedFiles = mutableMapOf<String, String>()
+//    val renamedFiles = mutableMapOf<String, String>()
 
     fs.sync {
       into(temporaryDir)
@@ -181,21 +180,21 @@ val prepareGitHubReleaseFiles by tasks.registering {
           "-$version" in sourceName
         }
 
-        val filename =
+        val newFileName =
           if (snapshotVersion != null) {
             sourceName.replace("-$snapshotVersion", "-${publicationVersion.get()}")
           } else {
             sourceName
           }
 
-        val newFileName = buildList {
-          add(publicationGroup.get())
-          add(filename)
-        }.joinToString("-")
+//        val newFileName = buildList {
+//          add(publicationGroup.get())
+//          add(filename)
+//        }.joinToString("-")
 
         relativePath = RelativePath(true, newFileName)
 
-        renamedFiles[filename] = newFileName
+//        renamedFiles[newFileName] = newFileName
       }
       includeEmptyDirs = false
     }
@@ -213,15 +212,15 @@ val prepareGitHubReleaseFiles by tasks.registering {
       .filter { it.isFile && it.name.endsWith(".module") }
       .forEach { file ->
 
-        renamedFiles.forEach { (oldName, newName) ->
-          file.writeText(
-            file.readText()
-              .replace(
-                """  "url": "$oldName",""",
-                """  "url": "$newName",""",
-              )
-          )
-        }
+//        renamedFiles.forEach { (oldName, newName) ->
+//          file.writeText(
+//            file.readText()
+//              .replace(
+//                """  "url": "$oldName",""",
+//                """  "url": "$newName",""",
+//              )
+//          )
+//        }
 
         setOf(
           "256",
