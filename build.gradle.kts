@@ -27,14 +27,14 @@ testing {
   }
   val test by suites.getting(JvmTestSuite::class) {
     dependencies {
-      implementation("org.junit.jupiter:junit-jupiter:5.12.2")
-      runtimeOnly("org.junit.platform:junit-platform-launcher")
+      implementation(libs.junit.jupiter)
+      runtimeOnly(libs.junit.platformLauncher)
 
-      implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.10.2"))
-      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+      implementation(platform(libs.kotlinx.coroutines.bom))
+      implementation(libs.kotlinx.coroutines.core)
+      implementation(libs.kotlinx.coroutines.test)
 
-      implementation("io.kotest:kotest-assertions-core:5.9.1")
+      implementation(libs.kotest.assertions)
     }
   }
 }
