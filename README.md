@@ -26,7 +26,6 @@ Artifacts are published to GitHub Releases.
 ```kotlin
 // build.gradle.kts
 
-
 repositories {
   ivy("https://github.com/") {
     name = "GitHub Releases"
