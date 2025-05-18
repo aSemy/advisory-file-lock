@@ -28,7 +28,7 @@ jobs:
           fetch-tags: true
           # https://github.com/actions/checkout/issues/1471#issuecomment-1755639487
           fetch-depth: 0
-#          filter: tree:0
+          filter: tree:0
 
       - name: tmp debug
         shell: bash
@@ -57,8 +57,7 @@ jobs:
         id: prepare_release_assets
         shell: bash
         run: |
-          output=$(./gradlew prepareGitHubReleaseFiles)
-          echo "$output"
+          output=$(./gradlew prepareGitHubReleaseFiles 2>&1 | tee /dev/tty)
           outputDir=$(echo "$output" | grep "\[:prepareGitHubReleaseFiles\] outputDir:" | sed 's/.*outputDir://')
           echo "outputDir: $(outputDir)"
           echo "outputDir=$outputDir" >> "$GITHUB_OUTPUT"
