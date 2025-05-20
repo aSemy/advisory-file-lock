@@ -7,6 +7,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import java.nio.file.Path
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -21,7 +22,7 @@ class FileLockTest {
   fun `verify write lock prevents concurrent modification`(
     @TempDir
     workingDir: Path,
-  ): Unit = runTest {
+  ): Unit = runTest(Dispatchers.IO) {
     val lockFile = LockFile(workingDir.resolve("a.lock"))
 
     var counter = 0
@@ -160,22 +161,42 @@ class FileLockTest {
   }
 
   @Test
-  fun `when FileReadWriteLock is closed - expect access file is closed`() {
+  fun `when FileReadWriteLock is closed - expect access file is closed`(
+    @TempDir
+    workingDir: Path,
+  ) {
+    val lockFilePath = workingDir.resolve("a.lock")
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
+
     // TODO
   }
 
   @Test
-  fun `test exception releases read lock`() {
+  fun `when exception is thrown from within read lock use block - expect read lock is released`(
+    @TempDir
+    workingDir: Path,
+  ) {
+    val lockFilePath = workingDir.resolve("a.lock")
+    val lockFile = LockFile(lockFilePath)
+
     // TODO
   }
 
   @Test
-  fun `test exception releases write lock`() {
+  fun `when exception is thrown from within read lock use block - expect write lock is released`(
+    @TempDir
+    workingDir: Path,
+  ) {
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
     // TODO
   }
 
   @Test
-  fun `verify temp dir can be modified using system property`() {
+  fun `verify temp dir can be modified using system property`(
+    @TempDir
+    workingDir: Path,
+  ) {
+    val lockFile = LockFile(workingDir.resolve("a.lock"))
     // TODO test dev.adamko.advisoryfilelock.socketDir
   }
 }
