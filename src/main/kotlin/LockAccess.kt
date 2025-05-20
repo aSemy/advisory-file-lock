@@ -40,6 +40,4 @@ sealed interface LockAccess : AutoCloseable {
   @Throws(InterruptedException::class)
   override fun close(): Unit =
     unlock()
-
-
 }
