@@ -1,0 +1,88 @@
+name: Run Tests
+
+on:
+  merge_group: { }
+  push:
+    branches:
+      - "renovate/**"
+  workflow_dispatch:
+    inputs:
+      checkout-ref:
+        description: "The branch, tag or SHA to checkout. See actions/checkout 'ref'."
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      checkout-ref:
+        description: "The branch, tag or SHA to checkout. See actions/checkout 'ref'."
+        required: false
+        type: string
+
+concurrency:
+  group: "Tests: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write # required by mikepenz/action-junit-report
+
+jobs:
+
+  gradle-check:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            task: "check --continue"
+          - os: ubuntu-latest
+            task: "check --continue"
+          - os: windows-latest
+            task: "check --continue"
+      fail-fast: false
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    steps:
+
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref || github.ref }}
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-cleanup: always
+          # write build cache on 'main' and 'release' branches, or tags (default is 'main' only)
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/heads/release') && !startsWith(github.ref, 'refs/tags/') }}
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - run: >-
+          ./gradlew check --continue
+
+      - name: Upload build reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report-${{ runner.os }}${{ github.action }}
+          path: |
+            **/build/reports/
+            **/*.hprof
+            **/*.log
+          if-no-files-found: ignore
+
+      - name: Publish Test Reports
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: |
+            **/build/test-results/**/TEST-*.xml
+          require_tests: false

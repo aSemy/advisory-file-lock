@@ -1,4 +1,4 @@
-name: Handle Drafted Release
+name: Release Assets
 
 on:
   release:
@@ -15,11 +15,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+
+  tests:
+    uses: ./.github/workflows/run-tests.yml
+    permissions:
+      contents: read
+      checks: write
+
   handle-release:
     name: Process Draft Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
+    needs: tests
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -51,7 +58,6 @@ jobs:
           # write build cache on 'main' and 'release' branches, or tags (default is 'main' only)
           cache-read-only: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/heads/release') && !startsWith(github.ref, 'refs/tags/') }}
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-
 
       - name: Create Release assets
         id: prepare_release_assets
