@@ -1,9 +1,15 @@
 @file:Suppress("UnstableApiUsage")
+@file:OptIn(ExperimentalSerializationApi::class)
 
 import java.net.URI
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.toPath
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.encodeToStream
+import model.GradleModuleMetadata
+import model.MutableGradleModuleMetadata
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
@@ -59,18 +65,6 @@ tasks.updateDaemonJvm {
   languageVersion = JavaLanguageVersion.of(21)
 }
 
-publishing {
-  repositories {
-    maven(layout.buildDirectory.dir("build-dir-maven")) {
-      name = "BuildDir"
-    }
-  }
-  publications {
-    create<MavenPublication>("maven") {
-      from(components["java"])
-    }
-  }
-}
 
 idea {
   module {
@@ -85,80 +79,69 @@ idea {
   }
 }
 
+publishing {
+  publications {
+    create<MavenPublication>("maven") {
+      from(components["java"])
+    }
+  }
+}
+
+val buildDirMavenRepo =
+  publishing.repositories.maven(layout.buildDirectory.dir("build-dir-maven")) {
+    name = "BuildDir"
+  }
+
+fun buildDirMavenDirectoryProvider(): Provider<Directory> =
+  objects.directoryProperty().fileProvider(provider { buildDirMavenRepo }.map { it.url.toPath().toFile() })
+
+val buildDirPublishTasks = tasks.withType<PublishToMavenRepository>().matching { task ->
+  task.repository?.name == buildDirMavenRepo.name
+}
+
+val cleanBuildDirDirectory by tasks.registering(Delete::class) {
+  val buildDirMavenRepoDir = buildDirMavenDirectoryProvider()
+  delete(buildDirMavenRepoDir)
+}
+
+buildDirPublishTasks.configureEach {
+  val repositoryUrl: Provider<URI> = provider { repository.url }
+
+  outputs.dir(repositoryUrl)
+    .withPropertyName("repositoryUrl")
+
+  dependsOn(cleanBuildDirDirectory)
+}
 
 tasks.withType<PublishToMavenRepository>()
-  .matching { task ->
-    try {
-      task.repository.url.toPath()
-      true
-    } catch (ex: IllegalArgumentException) {
-      false
-    }
-  }
-  .configureEach {
-    val repositoryUrl: Provider<URI> = provider { repository.url }
-
-    outputs.dir(repositoryUrl)
-      .withPropertyName("repositoryUrl")
-
-    doFirst {
-      @OptIn(ExperimentalPathApi::class)
-      repositoryUrl.get().toPath().deleteRecursively()
-    }
-  }
-
-val publishMavenPublicationToBuildDirRepository =
-  tasks.named<PublishToMavenRepository>("publishMavenPublicationToBuildDirRepository")
+  .matching { it.repository.name == "BuildDir" }
 
 val prepareGitHubReleaseFiles by tasks.registering {
   group = "publishing"
 
   val fs = serviceOf<FileSystemOperations>()
 
-  val publicationDir: Provider<FileCollection> =
-    publishMavenPublicationToBuildDirRepository.map { it.outputs.files }
-  inputs.files(publicationDir)
-    .withPropertyName("publicationDir")
+  dependsOn(tasks.named("publishAllPublicationsToBuildDirRepository"))
+
+  val buildDirMavenRepoDir = buildDirMavenDirectoryProvider()
+  inputs.files(buildDirMavenRepoDir)
+    .withPropertyName("buildDirMavenRepoDir")
     .withPathSensitivity(RELATIVE)
 
-  val publicationGroup = publishMavenPublicationToBuildDirRepository.map { it.publication.groupId }
-  val publicationArtifactId = publishMavenPublicationToBuildDirRepository.map { it.publication.artifactId }
-  val publicationVersion = publishMavenPublicationToBuildDirRepository.map { it.publication.version }
-  inputs.property("publicationGroup", publicationGroup)
-  inputs.property("publicationArtifactId", publicationArtifactId)
-  inputs.property("publicationVersion", publicationVersion)
-
-  outputs.dir(temporaryDir)
+  val destinationDir = layout.buildDirectory.dir("github-release-files")
+  outputs.dir(destinationDir)
 
   doLast {
-    logger.lifecycle("[$path] publication group: ${publicationGroup.get()}")
-    logger.lifecycle("[$path] publication artifact: ${publicationArtifactId.get()}")
-    logger.lifecycle("[$path] publication version: ${publicationVersion.get()}")
+    val repoDir = buildDirMavenRepoDir.get().asFile
+    println("[$path] processing buildDirMavenRepo: $repoDir")
 
-    val repoDir = publicationDir.get().singleFile
-
-    val mavenMetadataContent = repoDir.walk()
-      .filter { it.isFile && it.parentFile.name == publicationVersion.orNull }
-      .firstOrNull { it.name == "maven-metadata.xml" }
-      ?.readText()
-      .orEmpty()
-
-    val snapshotVersions = mavenMetadataContent
-      .substringAfter("<snapshotVersions>", "")
-      .substringBefore("</snapshotVersions>", "")
-      .split("<snapshotVersion>")
-      .mapNotNull { v ->
-        v.substringAfter("<value>", "")
-          .substringBefore("</value>", "")
-          .ifBlank { null }
-      }
-      .toSet()
-
-//    val renamedFiles = mutableMapOf<String, String>()
+    val json = Json {
+      prettyPrint = true
+      prettyPrintIndent = "  "
+    }
 
     fs.sync {
-      into(temporaryDir)
-      from(repoDir)
+      into(destinationDir)
       include(
         "**/*.jar",
         "**/*.module",
@@ -171,56 +154,81 @@ val prepareGitHubReleaseFiles by tasks.registering {
         "**/maven-metadata.xml",
         "**/*.pom",
       )
-      eachFile {
-        // Update filenames:
-        // - Rename the snapshot timestamp with 'SNAPSHOT'.
-        // - Remove directories (can't attach directories to GitHub Release).
+      includeEmptyDirs = false
 
-        val snapshotVersion = snapshotVersions.firstOrNull { version ->
-          "-$version" in sourceName
+      val moduleMetadataFiles = repoDir.walk()
+        .filter { it.isFile && it.extension == "module" }
+        .filter { moduleFile ->
+          try {
+            moduleFile.inputStream().use { source ->
+              json.decodeFromStream(MutableGradleModuleMetadata.serializer(), source)
+            }
+            true
+          } catch (ex: IllegalArgumentException) {
+            logger.lifecycle("[$path] ${moduleFile.name} is not a valid Gradle module metadata file: $ex")
+            false
+          } catch (ex: SerializationException) {
+            logger.lifecycle("[$path] ${moduleFile.name} is not a valid Gradle module metadata file: $ex ")
+            false
+          }
         }
 
-        val newFileName =
-          if (snapshotVersion != null) {
-            sourceName.replace("-$snapshotVersion", "-${publicationVersion.get()}")
-          } else {
-            sourceName
+      //region update gradle module metadata
+      moduleMetadataFiles.forEach { moduleFile ->
+        val moduleMetadata = moduleFile.inputStream().use { source ->
+          json.decodeFromStream(MutableGradleModuleMetadata.serializer(), source)
+        }
+        if (moduleMetadata.component.url?.startsWith("../../") == true) {
+          moduleMetadata.component.url = moduleMetadata.component.url?.substringAfterLast("/")
+        }
+
+        moduleMetadata.variants.forEach { variant ->
+          variant.availableAt?.let { aa ->
+            if (aa.url.startsWith("../../")) {
+              aa.url = aa.url.substringAfterLast("/")
+            }
           }
-
-//        val newFileName = buildList {
-//          add(publicationGroup.get())
-//          add(filename)
-//        }.joinToString("-")
-
-        relativePath = RelativePath(true, newFileName)
-
-//        renamedFiles[newFileName] = newFileName
+        }
+        moduleFile.outputStream().use { sink ->
+          json.encodeToStream(MutableGradleModuleMetadata.serializer(), moduleMetadata, sink)
+        }
       }
-      includeEmptyDirs = false
+      //endregion
+
+      moduleMetadataFiles
+        .forEach { moduleFile ->
+          val moduleMetadata = moduleFile.inputStream().use { stream ->
+            Json.decodeFromStream(GradleModuleMetadata.serializer(), stream)
+          }
+          val moduleVersion = moduleMetadata.component.version
+          val moduleName = moduleMetadata.component.module
+
+          from(moduleFile.parentFile)
+
+          val snapshotVersion = moduleFile.nameWithoutExtension
+            .substringAfter("$moduleName-", "")
+
+          val isSnapshot = moduleVersion.endsWith("-SNAPSHOT") && snapshotVersion != moduleVersion
+
+          eachFile {
+            // Update filenames:
+            // - Rename the snapshot timestamp with 'SNAPSHOT'.
+            // - Remove directories (can't attach directories to GitHub Release).
+
+            val newFileName = if (isSnapshot) {
+              sourceName.replace("-$snapshotVersion", "-${moduleVersion}")
+            } else {
+              sourceName
+            }
+
+            relativePath = RelativePath(true, newFileName)
+          }
+        }
     }
 
-//    println(
-//      "renamedFiles: ${
-//        renamedFiles.entries.sortedBy { it.key }.joinToString(
-//          "\n",
-//          prefix = "\n"
-//        ) { (oldName, newName) -> "  ${oldName.padEnd(70, ' ')} -> $newName" }
-//      }"
-//    )
-
-    temporaryDir.walk()
+    destinationDir.get().asFile.walk()
       .filter { it.isFile && it.name.endsWith(".module") }
       .forEach { file ->
-
-//        renamedFiles.forEach { (oldName, newName) ->
-//          file.writeText(
-//            file.readText()
-//              .replace(
-//                """  "url": "$oldName",""",
-//                """  "url": "$newName",""",
-//              )
-//          )
-//        }
 
         setOf(
           "256",
@@ -231,6 +239,6 @@ val prepareGitHubReleaseFiles by tasks.registering {
         }
       }
 
-    logger.lifecycle("[$path] outputDir:${temporaryDir.invariantSeparatorsPath}")
+    logger.lifecycle("[$path] outputDir:${destinationDir.get().asFile.invariantSeparatorsPath}")
   }
 }

@@ -12,8 +12,8 @@ import kotlin.time.Duration.Companion.seconds
 
 
 fun main(args: Array<String>) {
-  val repetitions = args.firstOrNull()?.toIntOrNull() ?: 1000
-  val readers = args.getOrNull(1)?.toIntOrNull() ?: 1
+  val writers = args.firstOrNull()?.toIntOrNull() ?: 100
+  val readers = args.getOrNull(1)?.toIntOrNull() ?: 10
 
   val workingDir = Path("demo-data/main2").createDirectories()
   val lockFile = workingDir.resolve("a.lock")
@@ -28,8 +28,9 @@ fun main(args: Array<String>) {
 
   var c = 0
 
+  // represents Kotlin Native Compile task
   repeat(readers) { i ->
-    thread(isDaemon = true, name = "reader$i") {
+    thread(name = "reader$i") {
       LockFile(lockFile).use { locker ->
         while (true) {
           Thread.sleep(i.seconds.inWholeMilliseconds)
@@ -46,19 +47,23 @@ fun main(args: Array<String>) {
 
   threadSleep(1.seconds)
 
-  repeat(repetitions) {
-    if (c > 100 && c % 127 == 0) {
-      println("!!!!!!!!!!!!!!! TRIGGERING GC !!!!!!!!!!!!!!!!!!!!!")
-      System.gc()
-    }
 
-    LockFile(lockFile).use { locker ->
-      locker.withWriteLock {
-        val current = dataFile.readText().toInt()
-        println("[writer] current = $current")
-        dataFile.writeText((current + 1).toString())
-        c++
-        threadSleep(10.milliseconds)
+  // represents Kotlin Konan (re)install
+  repeat(writers) {
+    thread(name = "writer$it") {
+//    if (c > 100 && c % 127 == 0) {
+//      println("!!!!!!!!!!!!!!! TRIGGERING GC !!!!!!!!!!!!!!!!!!!!!")
+//      System.gc()
+//    }
+
+      LockFile(lockFile).use { locker ->
+        locker.withWriteLock {
+          val current = dataFile.readText().toInt()
+          println("[writer] current = $current")
+          dataFile.writeText((current + 1).toString())
+          c++
+          threadSleep(10.milliseconds)
+        }
       }
     }
   }
