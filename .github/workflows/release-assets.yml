@@ -63,7 +63,7 @@ jobs:
         id: prepare_release_assets
         shell: bash
         run: |
-          output=$(./gradlew prepareGitHubReleaseFiles 2>&1 | tee /dev/tty)
+          output=$(./gradlew prepareGitHubReleaseFiles 2>&1)
           outputDir=$(echo "$output" | grep "\[:prepareGitHubReleaseFiles\] outputDir:" | sed 's/.*outputDir://')
           echo "outputDir: $(outputDir)"
           echo "outputDir=$outputDir" >> "$GITHUB_OUTPUT"
