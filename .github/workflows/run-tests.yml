@@ -39,7 +39,7 @@ jobs:
           - os: windows-latest
             task: "check --continue"
       fail-fast: false
-    runs-on: ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
 
