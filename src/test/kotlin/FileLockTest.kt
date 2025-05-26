@@ -23,28 +23,29 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ): Unit = runBlocking(Dispatchers.IO) {
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
 
-    var counter = 0
+      var counter = 0
 
-    val n = 1000  // number of coroutines to launch
-    val k = 1000 // times an action is repeated by each coroutine
+      val n = 1000  // number of coroutines to launch
+      val k = 1000 // times an action is repeated by each coroutine
 
-    lockFile.use { locker ->
-      repeat(n) {
-        coroutineScope {
-          launch {
-            repeat(k) {
-              locker.withWriteLock {
-                counter++
+      lockFile.use { locker ->
+        repeat(n) {
+          coroutineScope {
+            launch {
+              repeat(k) {
+                locker.withWriteLock {
+                  counter++
+                }
               }
             }
           }
         }
       }
-    }
 
-    assertEquals(n * k, counter)
+      assertEquals(n * k, counter)
+    }
   }
 
   @Test
@@ -52,35 +53,37 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
 
-    lockFile.writeLock().lock()
+      lockFile.writeLock().lock()
 
-    var thrown: Throwable? = null
+      var thrown: Throwable? = null
 
-    val t = thread {
-      try {
-        println("acquiring read lock...")
-        lockFile.withReadLock {
-          println("acquired read lock!")
-          error("read lock acquisition should be interrupted")
+      val t = thread {
+        try {
+          println("acquiring read lock...")
+          lockFile.withReadLock {
+            println("acquired read lock!")
+            error("read lock acquisition should be interrupted")
+          }
+        } catch (e: Throwable) {
+          thrown = e
         }
-      } catch (e: Throwable) {
-        thrown = e
       }
-    }
 
-    threadSleep(100.milliseconds)
-    t.interrupt()
-    t.join(100)
+      threadSleep(100.milliseconds)
+      t.interrupt()
+      t.join(100)
 
-    if (t.isAlive) {
-      fail("Function did not respond to interrupt, thread is still running")
-    }
+      if (t.isAlive) {
+        fail("Function did not respond to interrupt, thread is still running")
+      }
 
-    thrown.asClue {
-      it.shouldBeInstanceOf<InterruptedException>()
-      it.message shouldStartWith "Interrupted while waiting for lock on FileChannel@"
+      thrown.asClue {
+        it.shouldBeInstanceOf<InterruptedException>()
+        it.message shouldStartWith "Interrupted while waiting for lock on FileChannel@"
+      }
+
     }
   }
 
@@ -89,21 +92,22 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
 
-    var twoReadLockObtained = false
+      var twoReadLockObtained = false
 
-    val t = thread {
-      lockFile.withReadLock {
+      val t = thread {
         lockFile.withReadLock {
-          twoReadLockObtained = true
+          lockFile.withReadLock {
+            twoReadLockObtained = true
+          }
         }
       }
+
+      t.join(100)
+
+      assertTrue(twoReadLockObtained, "expect two read locks are obtained")
     }
-
-    t.join(100)
-
-    assertTrue(twoReadLockObtained, "expect two read locks are obtained")
   }
 
   @Test
@@ -111,26 +115,27 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
 
-    var writeLockObtained = false
+      var writeLockObtained = false
 
-    val t = thread {
-      try {
-        lockFile.withReadLock {
-          lockFile.withWriteLock {
-            writeLockObtained = true
+      val t = thread {
+        try {
+          lockFile.withReadLock {
+            lockFile.withWriteLock {
+              writeLockObtained = true
+            }
           }
+        } catch (_: InterruptedException) {
+          // ignore - an interrupt is expected
         }
-      } catch (_: InterruptedException) {
-        // ignore - an interrupt is expected
       }
+
+      t.join(100)
+      t.interrupt()
+
+      assertFalse(writeLockObtained, "expect write lock was not obtained")
     }
-
-    t.join(100)
-    t.interrupt()
-
-    assertFalse(writeLockObtained, "expect write lock was not obtained")
   }
 
   @Test
@@ -138,26 +143,27 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
 
-    var readLockObtained = false
+      var readLockObtained = false
 
-    val t = thread {
-      try {
-        lockFile.withWriteLock {
-          lockFile.withReadLock {
-            readLockObtained = true
+      val t = thread {
+        try {
+          lockFile.withWriteLock {
+            lockFile.withReadLock {
+              readLockObtained = true
+            }
           }
+        } catch (_: InterruptedException) {
+          // ignore - an interrupt is expected
         }
-      } catch (_: InterruptedException) {
-        // ignore - an interrupt is expected
       }
+
+      t.join(100)
+      t.interrupt()
+
+      assertFalse(readLockObtained, "expect read lock was not obtained")
     }
-
-    t.join(100)
-    t.interrupt()
-
-    assertFalse(readLockObtained, "expect read lock was not obtained")
   }
 
   @Test
@@ -166,9 +172,10 @@ class FileLockTest {
     workingDir: Path,
   ) {
     val lockFilePath = workingDir.resolve("a.lock")
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
 
-    // TODO
+      // TODO
+    }
   }
 
   @Test
@@ -177,9 +184,9 @@ class FileLockTest {
     workingDir: Path,
   ) {
     val lockFilePath = workingDir.resolve("a.lock")
-    val lockFile = LockFile(lockFilePath)
-
-    // TODO
+    val lockFile = LockFile(lockFilePath).use { lockFile ->
+      // TODO
+    }
   }
 
   @Test
@@ -187,8 +194,9 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
-    // TODO
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+      // TODO
+    }
   }
 
   @Test
@@ -196,7 +204,8 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    val lockFile = LockFile(workingDir.resolve("a.lock"))
-    // TODO test dev.adamko.advisoryfilelock.socketDir
+    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+      // TODO test dev.adamko.advisoryfilelock.socketDir
+    }
   }
 }
