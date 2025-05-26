@@ -10,7 +10,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
@@ -22,7 +22,7 @@ class FileLockTest {
   fun `verify write lock prevents concurrent modification`(
     @TempDir
     workingDir: Path,
-  ): Unit = runTest(Dispatchers.IO) {
+  ): Unit = runBlocking(Dispatchers.IO) {
     val lockFile = LockFile(workingDir.resolve("a.lock"))
 
     var counter = 0
