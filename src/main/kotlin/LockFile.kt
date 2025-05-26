@@ -59,7 +59,6 @@ class LockFile(
   }
 
   override fun close() {
-    accessFile.channel.close()
     accessFile.close()
   }
 
