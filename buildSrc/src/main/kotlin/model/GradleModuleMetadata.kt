@@ -10,13 +10,13 @@ import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class GradleModuleMetadata(
+  @EncodeDefault
+  override val formatVersion: String = "1.1",
   override val component: Component,
   override val createdBy: CreatedBy,
   @EncodeDefault
   override val variants: List<Variant> = emptyList(),
 ) : GradleModuleMetadataSpec {
-  @EncodeDefault
-  override val formatVersion: String = "1.1"
 
   @Serializable
   data class Component(
