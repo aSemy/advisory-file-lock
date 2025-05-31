@@ -25,13 +25,24 @@ Artifacts are published to GitHub Releases.
 
 ```kotlin
 // build.gradle.kts
+plugins {
+  kotlin("jvm")
+}
+
+dependencies {
+  implementation("aSemy.advisory-file-lock:advisory-file-lock:1.0.0")
+}
 
 repositories {
+  mavenCentral()
+
   ivy("https://github.com/") {
-    name = "GitHub Releases"
+    name = "GitHubReleaseAssets"
     patternLayout {
-      setM2compatible(true)
-      artifact("[organisation]/releases/download/v[revision]/[module]-[revision].[ext]")
+      ivy("[orgPath]/releases/download/v[revision]/[module]-[revision].ivy.xml")
+      ivy("[orgPath]/releases/download/v[revision]/[module]-[revision].module")
+
+      artifact("[orgPath]/releases/download/v[revision]/[artifact]-[revision](-[classifier]).[ext]")
     }
     metadataSources {
       gradleMetadata()
