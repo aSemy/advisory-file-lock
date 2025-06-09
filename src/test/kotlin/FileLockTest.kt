@@ -23,7 +23,7 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ): Unit = runBlocking(Dispatchers.IO) {
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
 
       var counter = 0
 
@@ -53,7 +53,7 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
 
       lockFile.writeLock().lock()
 
@@ -92,7 +92,7 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
 
       var twoReadLockObtained = false
 
@@ -115,7 +115,7 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
 
       var writeLockObtained = false
 
@@ -143,7 +143,7 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
 
       var readLockObtained = false
 
@@ -172,7 +172,7 @@ class FileLockTest {
     workingDir: Path,
   ) {
     val lockFilePath = workingDir.resolve("a.lock")
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
 
       // TODO
     }
@@ -184,7 +184,7 @@ class FileLockTest {
     workingDir: Path,
   ) {
     val lockFilePath = workingDir.resolve("a.lock")
-    val lockFile = LockFile(lockFilePath).use { lockFile ->
+    val lockFile = LockFile("test", lockFilePath).use { lockFile ->
       // TODO
     }
   }
@@ -194,7 +194,7 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
       // TODO
     }
   }
@@ -204,7 +204,7 @@ class FileLockTest {
     @TempDir
     workingDir: Path,
   ) {
-    LockFile(workingDir.resolve("a.lock")).use { lockFile ->
+    LockFile("test", workingDir.resolve("a.lock")).use { lockFile ->
       // TODO test dev.adamko.advisoryfilelock.socketDir
     }
   }

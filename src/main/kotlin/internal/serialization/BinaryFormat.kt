@@ -79,7 +79,7 @@ internal class DataOutputEncoder(
 
 internal class DataInputDecoder(
   private val input: DataInputStream,
-  private var elementsCount: Int = 0,
+//  private var elementsCount: Int = 0,
 ) {
 
   //private var elementIndex = 0
@@ -105,13 +105,13 @@ internal class DataInputDecoder(
   //  return elementIndex++
   //}
 
-  fun beginStructure(elementsCount: Int) =
-    DataInputDecoder(input, elementsCount)
+//  fun beginStructure( ): DataInputDecoder =
+//    DataInputDecoder(input )
 
   //fun decodeSequentially(): Boolean = true
 
   fun decodeCollectionSize(): Int =
-    decodeCompactSize().also { elementsCount = it }
+    decodeCompactSize()//.also { elementsCount = it }
 
   //fun decodeNotNullMark(): Boolean = decodeBoolean()
 

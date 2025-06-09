@@ -7,7 +7,6 @@ import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.channels.SocketChannel
-import java.nio.file.Path
 import java.util.logging.Logger
 import kotlin.io.path.exists
 import kotlin.random.Random
@@ -48,7 +47,7 @@ internal class WriteLockImpl(
 
   private fun refreshReaders() {
     val storedData = channel.readLockFileData()
-    val aliveReaders = storedData.readers.filterTo(sortedSetOf()) { isReaderAlive(it) }
+    val aliveReaders = storedData.readers.filterTo(sortedSetOf()) { it.isAlive() }
 
     val actualData = LockFileData(aliveReaders)
 
@@ -61,7 +60,7 @@ internal class WriteLockImpl(
     }
   }
 
-  private fun isReaderAlive(socketPath: Path): Boolean {
+  private fun LockFileData.Reader.isAlive(): Boolean {
     if (!socketPath.exists()) return false
 
     var attempts = 0

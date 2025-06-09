@@ -13,6 +13,7 @@ import kotlin.io.path.absolute
  * Can be locked/unlocked multiple times.
  */
 internal class ReadLockImpl(
+  private val name: String,
   private val channel: FileChannel,
   socketDir: Path,
   private val id: String = randomAlphaNumericString(),
@@ -36,7 +37,12 @@ internal class ReadLockImpl(
     channel.lockLenient().use { _ ->
       logger.fine("[reader $id] Locking")
       val data = channel.readLockFileData()
-      val newData = data.addReader(socketFile)
+      val newData = data.addReader(
+        LockFileData.Reader(
+          id = name,
+          socketPath = socketFile,
+        )
+      )
       channel.writeLockFileData(newData)
     }
   }
@@ -47,7 +53,7 @@ internal class ReadLockImpl(
 //      pingListener?.interrupt()
 //      pingListener = null
       val data = channel.readLockFileData()
-      if (socketFile !in data.readers) {
+      if (data.readers.none { it.socketPath == socketFile }) {
         logger.warning("[reader $id] lock file data does not contain $socketFile")
       } else {
         val newData = data.removeReader(socketFile)

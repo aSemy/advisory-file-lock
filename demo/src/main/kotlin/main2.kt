@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
   // represents Kotlin Native Compile task
   repeat(readers) { i ->
     thread(name = "reader$i") {
-      LockFile(lockFile).use { locker ->
+      LockFile("readers-loop", lockFile).use { locker ->
         while (true) {
           Thread.sleep(i.seconds.inWholeMilliseconds)
           locker.withReadLock {
@@ -56,7 +56,7 @@ fun main(args: Array<String>) {
 //      System.gc()
 //    }
 
-      LockFile(lockFile).use { locker ->
+      LockFile("writers-loop", lockFile).use { locker ->
         locker.withWriteLock {
           val current = dataFile.readText().toInt()
           println("[writer] current = $current")
@@ -71,7 +71,7 @@ fun main(args: Array<String>) {
   println("c = $c")
 
   val endDataVal =
-    LockFile(lockFile).use { locker ->
+    LockFile("final", lockFile).use { locker ->
       locker.withReadLock {
         dataFile.readText().toInt()
       }

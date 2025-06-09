@@ -16,19 +16,23 @@ import kotlin.io.path.exists
  *
  * The lock file is locked for the duration of the [LockFile] instance.
  *
+ * @param name Human-readable name for log and error messages.
  * @param lockFile the path to the lock file.
  * @param socketDir the directory to store the lock file's socket file
  * (used for interprocess communication, to verify the lock is still held).
  */
 class LockFile(
+  private val name: String,
   lockFile: Path,
   private val socketDir: Path = defaultSocketDir,
 ) : AutoCloseable {
 
   constructor(
+    name: String,
     path: String,
     socketDir: Path = defaultSocketDir,
   ) : this(
+    name = name,
     lockFile = Path(path),
     socketDir = socketDir,
   )
@@ -47,6 +51,7 @@ class LockFile(
 
   fun readLock(): LockAccess.ReadLock {
     return ReadLockImpl(
+      name = name,
       channel = accessFile.channel,
       socketDir = socketDir,
     )
