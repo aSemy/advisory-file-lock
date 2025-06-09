@@ -228,17 +228,38 @@ val prepareGitHubReleaseFiles by tasks.registering {
 
     destinationDir.get().asFile.walk()
       .filter { it.isFile && it.name.endsWith(".module") }
-      .forEach { file ->
+      .forEach { moduleFile ->
 
         setOf(
           "256",
           "512",
         ).forEach {
-          val checksum = file.computeChecksum("SHA-$it")
-          file.resolveSibling(file.name + ".sha$it").writeText(checksum)
+          val checksum = moduleFile.computeChecksum("SHA-$it")
+          moduleFile.resolveSibling(moduleFile.name + ".sha$it").writeText(checksum)
         }
-      }
 
-    logger.lifecycle("[$path] outputDir:${destinationDir.get().asFile.invariantSeparatorsPath}")
+        val metadata = moduleFile.inputStream().use { stream ->
+          Json.decodeFromStream(GradleModuleMetadata.serializer(), stream)
+        }
+        val rootModuleName = metadata.component.module + "-" + metadata.component.version
+        if (moduleFile.nameWithoutExtension == rootModuleName) {
+          moduleFile.resolveSibling("advisory-file-lock.ivy.xml")
+            .writeText( // language=xml
+              """
+              |<?xml version="1.0"?>
+              |<ivy-module version="2.0"
+              |            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              |            xsi:noNamespaceSchemaLocation="https://ant.apache.org/ivy/schemas/ivy.xsd">
+              |    <!-- do_not_remove: published-with-gradle-metadata -->
+              |    <info organisation="${metadata.component.group}" module="${metadata.component.module}" revision="${metadata.component.version}" />
+              |</ivy-module>
+              |""".trimMargin()
+            )
+        }
+
+        destinationDir.get().asFile
+
+        logger.lifecycle("[$path] outputDir:${destinationDir.get().asFile.invariantSeparatorsPath}")
+      }
   }
 }
